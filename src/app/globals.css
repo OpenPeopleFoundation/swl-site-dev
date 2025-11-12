@@ -1,26 +1,78 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --background: #020409;
+  --foreground: #f7fafc;
+  --muted: #aab1c6;
+  --accent: #2A63FF;
+  --glass: rgba(255, 255, 255, 0.06);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-accent: var(--accent);
+  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-space-grotesk), "Space Grotesk", "Inter", sans-serif;
 }
 
 body {
-  background: var(--background);
+  min-height: 100vh;
+  background-image: radial-gradient(circle at 20% 20%, #0a0f1a, #020409 70%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  letter-spacing: 0.01em;
+}
+
+.font-body {
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: 300;
+}
+
+a,
+button {
+  transition: 200ms ease;
+}
+
+.glass-surface {
+  background: var(--glass);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  box-shadow: 0 0 40px rgba(10, 20, 40, 0.45);
+  backdrop-filter: blur(24px);
+}
+
+.panel-outline {
+  position: relative;
+}
+
+.panel-outline::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(45deg, rgba(42, 99, 255, 0.4), transparent 60%);
+  opacity: 0.45;
+  z-index: -1;
+  filter: blur(18px);
+}
+
+.parallax-stars {
+  mix-blend-mode: screen;
+}
+
+::selection {
+  background: rgba(42, 99, 255, 0.55);
+  color: #fff;
 }

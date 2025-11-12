@@ -1,0 +1,1 @@
+-- Snow White Laundry Supabase schema placeholder

@@ -1,5 +1,5 @@
 import { StaffDashboardPanels } from "@/components/staff-dashboard";
 
-export default function Home() {
+export default function StaffRoot() {
   return <StaffDashboardPanels />;
 }

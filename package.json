@@ -2,6 +2,7 @@
   "name": "swl-site-dev",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,19 +10,34 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "next": "16.0.1"
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/supabase-js": "^2.81.1",
+    "autoprefixer": "^10.4.22",
+    "bcryptjs": "^3.0.3",
+    "framer-motion": "^12.23.24",
+    "lucide-react": "^0.553.0",
+    "next": "^16.0.1",
+    "openai": "^6.8.1",
+    "postcss": "^8.5.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "supabase": "^2.58.5"
   },
   "devDependencies": {
-    "babel-plugin-react-compiler": "1.0.0",
-    "typescript": "^5",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.0.1"
-  }
+    "eslint-config-next": "^16.0.1",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5"
+  },
+  "description": "Internal-only Next.js 15 dashboard that powers staff access to scheduling, menu building, inventory tracking, and Cortex reflections for [Snow White Laundry](https://ai.snowwhitelaundry.co). The app ships with the dark neon-blue visual language that mirrors the guest site and is designed to deploy to its own Vercel project `swl-site-staff`.",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

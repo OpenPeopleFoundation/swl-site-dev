@@ -1,0 +1,71 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
+import type { ReactNode } from "react";
+
+const navItems = [
+  { label: "Home", href: "/staff" },
+  { label: "Schedule", href: "/staff/schedule" },
+  { label: "Menu", href: "/staff/menu" },
+  { label: "Inventory", href: "/staff/inventory" },
+  { label: "Reflection", href: "/staff/reflection" },
+];
+
+export default function StaffLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-space-gradient text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,#1b1f33,transparent_70%)]" />
+
+      <motion.div
+        aria-hidden="true"
+        className="parallax-stars absolute inset-0 bg-[url('/stars.svg')] opacity-30"
+        animate={{ backgroundPositionY: ["0%", "100%"] }}
+        transition={{ repeat: Infinity, duration: 120, ease: "linear" }}
+      />
+
+      <div className="relative z-10 flex min-h-screen flex-col items-center gap-8 px-4 py-8 sm:px-8">
+        <header className="glass-surface panel-outline w-full max-w-5xl rounded-[32px] border border-white/10 bg-white/5 px-6 py-5 backdrop-blur-xl">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.4em] text-white/50">
+                Snow White Laundry
+              </p>
+              <h1 className="text-3xl font-light text-white">
+                Cortex Orbital Console
+              </h1>
+            </div>
+            <span className="rounded-full border border-white/15 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/70">
+              Authenticated
+            </span>
+          </div>
+          <nav className="mt-4 flex flex-wrap gap-2 text-sm">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`rounded-full border px-4 py-2 transition ${
+                    isActive
+                      ? "border-accent/60 bg-accent/10 text-white"
+                      : "border-white/10 text-white/70 hover:border-accent/40 hover:text-white"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </header>
+
+        <section className="flex w-full max-w-5xl flex-1 items-start justify-center pb-10">
+          {children}
+        </section>
+      </div>
+    </main>
+  );
+}
