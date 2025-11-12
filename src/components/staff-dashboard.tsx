@@ -27,7 +27,7 @@ const modules = [
   {
     title: "Events",
     description: "Draft proposals, send contracts, and browse archived rituals.",
-    href: "/events/archive",
+    href: "/staff/events",
   },
 ];
 

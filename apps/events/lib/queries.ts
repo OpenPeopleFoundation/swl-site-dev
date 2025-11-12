@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 export type PrivateEvent = {
   id: string;
+  user_id?: string | null;
   guest_name: string;
   guest_email?: string | null;
   organization?: string | null;
@@ -25,6 +26,17 @@ export type PrivateEvent = {
   created_at?: string | null;
   updated_at?: string | null;
   [key: string]: unknown;
+};
+
+export type OpeningReservation = {
+  id: string;
+  user_id?: string | null;
+  email: string;
+  preferred_date: string;
+  party_size: number;
+  notes?: string | null;
+  status: string;
+  created_at?: string | null;
 };
 
 const baseColumns =
@@ -96,4 +108,34 @@ export async function listEventsForGuest(email: string) {
     return [];
   }
   return (data ?? []) as PrivateEvent[];
+}
+
+export async function listEventPipeline(limit = 50) {
+  const supabase = requireSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("private_events")
+    .select(baseColumns)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error("listEventPipeline error", error);
+    throw error;
+  }
+  return (data ?? []) as PrivateEvent[];
+}
+
+const openingReservationColumns =
+  "id, user_id, email, preferred_date, party_size, notes, status, created_at";
+
+export async function listOpeningReservations() {
+  const supabase = requireSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("opening_reservations")
+    .select(openingReservationColumns)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("listOpeningReservations error", error);
+    throw error;
+  }
+  return (data ?? []) as OpeningReservation[];
 }
