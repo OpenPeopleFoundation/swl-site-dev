@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
-import FloatingChat from "@/shared/ui/FloatingChat";
+import { ConditionalFloatingChat } from "@/shared/ui/ConditionalFloatingChat";
 import AmbientScene from "@/shared/ui/AmbientScene";
 import { AuthWatcher } from "@/apps/core/AuthWatcher";
 
@@ -49,7 +49,7 @@ export default function RootLayout({
         <AmbientScene />
         <AuthWatcher />
         {children}
-        <FloatingChat />
+        <ConditionalFloatingChat />
       </body>
     </html>
   );

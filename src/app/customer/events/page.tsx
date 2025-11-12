@@ -1,4 +1,6 @@
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { listEventsForGuest } from "@/apps/events/lib/queries";
 import { getSessionFromCookies } from "@/lib/session";
 
@@ -22,6 +24,41 @@ export default async function CustomerEventsPage() {
 
   const events = await listEventsForGuest(session.email);
 
+  async function handleCreate(formData: FormData) {
+    "use server";
+    const currentSession = await getSessionFromCookies();
+    if (!currentSession) {
+      redirect("/gate?next=/customer/events");
+    }
+    const supabase = getSupabaseAdmin();
+    const payload = {
+      guest_name: formData.get("guest_name")?.toString() ?? "Guest",
+      organization: formData.get("organization")?.toString() ?? null,
+      guest_email: currentSession.email,
+      event_type: formData.get("event_type")?.toString() ?? "Private Experience",
+      party_size: Number(formData.get("party_size")) || null,
+      preferred_date: formData.get("preferred_date")?.toString() ?? null,
+      start_time: formData.get("start_time")?.toString() ?? null,
+      end_time: formData.get("end_time")?.toString() ?? null,
+      menu_style: formData.get("menu_style")?.toString() ?? null,
+      budget_range: formData.get("budget_range")?.toString() ?? null,
+      special_requests: formData.get("special_requests")?.toString() ?? null,
+      status: "inquiry",
+    };
+
+    const { error } = await supabase
+      .from("private_events")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath("/customer/events");
+  }
+
   return (
     <div className="space-y-8">
       <header className="space-y-2 text-center">
@@ -35,6 +72,109 @@ export default async function CustomerEventsPage() {
             : "Request received. As soon as we schedule a date, you’ll see it here."}
         </p>
       </header>
+
+      <section className="rounded-3xl border border-white/10 bg-black/40 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+        <h2 className="text-2xl font-light text-white">Plan a New Ritual</h2>
+        <p className="mt-2 text-sm text-white/60">
+          Share a few details and the Cortex concierge will send a proposal.
+        </p>
+        <form action={handleCreate} className="mt-6 grid gap-4 md:grid-cols-2">
+          <label className="text-sm text-white/70">
+            Your Name
+            <input
+              name="guest_name"
+              defaultValue={session.email.split("@")[0]}
+              required
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
+            />
+          </label>
+          <label className="text-sm text-white/70">
+            Organization (optional)
+            <input
+              name="organization"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
+            />
+          </label>
+          <label className="text-sm text-white/70">
+            Event Type
+            <input
+              name="event_type"
+              placeholder="Buyout dinner, launch, wedding..."
+              required
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
+            />
+          </label>
+          <label className="text-sm text-white/70">
+            Party Size
+            <input
+              name="party_size"
+              type="number"
+              min={1}
+              placeholder="40"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
+            />
+          </label>
+          <label className="text-sm text-white/70">
+            Preferred Date
+            <input
+              name="preferred_date"
+              type="date"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
+            />
+          </label>
+          <div className="grid gap-4 md:grid-cols-2 md:col-span-2">
+            <label className="text-sm text-white/70">
+              Start Time
+              <input
+                name="start_time"
+                type="time"
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
+              />
+            </label>
+            <label className="text-sm text-white/70">
+              End Time
+              <input
+                name="end_time"
+                type="time"
+                className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
+              />
+            </label>
+          </div>
+          <label className="text-sm text-white/70 md:col-span-2">
+            Menu Style
+            <input
+              name="menu_style"
+              placeholder="Chef’s tasting, fortified cocktails..."
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
+            />
+          </label>
+          <label className="text-sm text-white/70 md:col-span-2">
+            Budget Range
+            <input
+              name="budget_range"
+              placeholder="$15k-$25k, open ended..."
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
+            />
+          </label>
+          <label className="text-sm text-white/70 md:col-span-2">
+            Vision & Requests
+            <textarea
+              name="special_requests"
+              rows={3}
+              placeholder="Describe the evening, any rituals, audio/visual needs..."
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
+            />
+          </label>
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              className="w-full rounded-2xl bg-[#2A63FF] py-3 text-sm uppercase tracking-[0.3em] text-white transition hover:bg-[#244eda]"
+            >
+              Submit Inquiry
+            </button>
+          </div>
+        </form>
+      </section>
 
       <section className="space-y-4">
         {events.map((event) => (
@@ -124,8 +264,8 @@ export default async function CustomerEventsPage() {
               No events are linked to <strong>{session.email}</strong> yet.
             </p>
             <p className="mt-2 text-sm">
-              Submit an inquiry at snowwhitelaundry.co/events or reach out to
-              cortex@snowwhitelaundry.co and we’ll connect your profile.
+              Submit the form above or reach out to cortex@snowwhitelaundry.co
+              and we’ll connect your profile.
             </p>
           </div>
         )}
