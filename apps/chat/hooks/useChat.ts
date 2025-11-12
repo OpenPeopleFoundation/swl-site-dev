@@ -1,8 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabaseClient";
+import {
+  getCurrentUser,
+  type StaffIdentity,
+} from "@/lib/getCurrentUser";
 
 export type ChatMessage = {
   id: string;
@@ -20,7 +24,7 @@ export function useChat({ channelId = "global-chat" }: UseChatOptions = {}) {
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const ready = Boolean(supabase);
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<StaffIdentity | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(ready);
   const [isSending, setIsSending] = useState(false);
@@ -32,16 +36,17 @@ export function useChat({ channelId = "global-chat" }: UseChatOptions = {}) {
     if (!supabase) return undefined;
     const client = supabase;
     let active = true;
-    client.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      setUser(data.session?.user ?? null);
+
+    async function refreshIdentity() {
+      const identity = await getCurrentUser(client);
+      if (active) setUser(identity);
+    }
+
+    void refreshIdentity();
+    const { data: authListener } = client.auth.onAuthStateChange(() => {
+      void refreshIdentity();
     });
-    const { data: authListener } = client.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!active) return;
-        setUser(session?.user ?? null);
-      },
-    );
+
     return () => {
       active = false;
       authListener.subscription.unsubscribe();

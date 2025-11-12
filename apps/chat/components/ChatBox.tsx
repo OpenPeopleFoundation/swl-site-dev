@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useChat } from "../hooks/useChat";
 import ChatInput from "./ChatInput";
+import UserBadge from "@/shared/ui/UserBadge";
 
 type ChatBoxProps = {
   onNewMessage?: (message: { content?: string | null; user_id: string }) => void;
@@ -49,9 +50,12 @@ export default function ChatBox({
         <p className="text-xs uppercase tracking-[0.4em] text-white/40">
           Cortex Chat
         </p>
-        <h2 className="text-lg font-light text-white">
-          Snow White Laundry Staff
-        </h2>
+        <div className="mt-2 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-light text-white">
+            Snow White Laundry Staff
+          </h2>
+          {user && <UserBadge user={user} subtitle="You" />}
+        </div>
       </header>
 
       <div className="scrollbar-hide flex-1 overflow-y-auto p-4 space-y-3 text-white">

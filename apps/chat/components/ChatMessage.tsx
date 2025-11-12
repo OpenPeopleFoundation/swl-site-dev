@@ -32,7 +32,7 @@ export function ChatMessage({
   const timestamp = message.created_at
     ? timeFormatter.format(new Date(message.created_at))
     : "";
-  const initials = (message.users?.full_name ?? "Staff")
+  const initials = (message.staff?.full_name ?? "Staff")
     .split(" ")
     .map((part) => part.charAt(0))
     .join("")
@@ -50,7 +50,7 @@ export function ChatMessage({
       {!isSelf && (
         <Avatar
           size={40}
-          src={message.users?.avatar_url ?? undefined}
+          src={message.staff?.avatar_url ?? undefined}
           initials={initials}
           className="shrink-0 bg-neutral-900/60"
         />
@@ -58,7 +58,7 @@ export function ChatMessage({
       <div className={`flex max-w-[80%] flex-col ${isSelf ? "items-end" : ""}`}>
         {!isSelf && (
           <p className="text-xs uppercase tracking-[0.3em] text-white/40">
-            {message.users?.full_name ?? "Staff"}
+            {message.staff?.full_name ?? "Staff"}
           </p>
         )}
         <div
@@ -72,7 +72,7 @@ export function ChatMessage({
             >
               Replying to{" "}
               <span className="font-medium">
-                {parentMessage.users?.full_name ?? "Staff"}
+                {parentMessage.staff?.full_name ?? "Staff"}
               </span>
               : {parentMessage.content ?? "[media]"}
             </button>

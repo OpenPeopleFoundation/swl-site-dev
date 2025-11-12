@@ -15,6 +15,8 @@ const FALLBACK_BOT_ID = "bot-user";
 
 const SUMMARY_BULLETS = 6;
 
+type StaffRow = { full_name?: string | null; avatar_url?: string | null; role?: string | null };
+
 type SupabaseMessageRow = {
   id: string;
   content: string | null;
@@ -24,7 +26,7 @@ type SupabaseMessageRow = {
   channel_id?: string | null;
   parent_id?: string | null;
   created_at: string;
-  users?: { full_name?: string | null; avatar_url?: string | null }[] | null;
+  staff?: StaffRow | StaffRow[] | null;
   reactions?: ReactionRecord[] | null;
 };
 
@@ -113,9 +115,9 @@ export default function ChatPage() {
       gif_url: message.gif_url ?? null,
       parent_id: message.parent_id ?? null,
       emotion_label: inferEmotion(message.content),
-      users: Array.isArray(message?.users)
-        ? message.users[0] ?? null
-        : message.users ?? null,
+      staff: Array.isArray(message.staff)
+        ? message.staff[0] ?? null
+        : message.staff ?? null,
       reactions: Array.isArray(message?.reactions) ? message.reactions : [],
     });
 
@@ -123,7 +125,7 @@ export default function ChatPage() {
       const { data, error } = await supabase
         .from("messages")
         .select(
-          "id, content, image_url, gif_url, user_id, channel_id, created_at, users(full_name, avatar_url), reactions(id, emoji, user_id, message_id)",
+          "id, content, image_url, gif_url, user_id, channel_id, created_at, staff:staff(full_name, avatar_url, role), reactions(id, emoji, user_id, message_id)",
         )
         .eq("channel_id", channelId)
         .order("created_at", { ascending: true });
@@ -160,7 +162,7 @@ export default function ChatPage() {
           const { data } = await supabase
             .from("messages")
             .select(
-              "id, content, image_url, gif_url, user_id, channel_id, created_at, users(full_name, avatar_url), reactions(id, emoji, user_id, message_id)",
+              "id, content, image_url, gif_url, user_id, channel_id, created_at, staff:staff(full_name, avatar_url, role), reactions(id, emoji, user_id, message_id)",
             )
             .eq("id", insertedId)
             .maybeSingle();
@@ -290,7 +292,7 @@ export default function ChatPage() {
     const recent = messages.slice(-SUMMARY_BULLETS);
     if (recent.length === 0) return;
     const payload = recent.map((message) => ({
-      author: message.users?.full_name ?? "Staff",
+      author: message.staff?.full_name ?? "Staff",
       content:
         message.content ??
         (message.image_url || message.gif_url ? "[media]" : ""),
@@ -348,7 +350,7 @@ export default function ChatPage() {
                   ? {
                       id: replyTarget.id,
                       content: replyTarget.content,
-                      author: replyTarget.users?.full_name ?? "Staff",
+                      author: replyTarget.staff?.full_name ?? "Staff",
                     }
                   : null
               }

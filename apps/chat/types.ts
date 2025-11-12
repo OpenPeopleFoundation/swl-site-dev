@@ -16,9 +16,10 @@ export type ChatMessageRecord = {
   created_at: string;
   emotion_label?: string | null;
   emotion_confidence?: number | null;
-  users?: {
+  staff?: {
     full_name?: string | null;
     avatar_url?: string | null;
+    role?: string | null;
   } | null;
   reactions?: ReactionRecord[];
 };
