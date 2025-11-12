@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import type { StaffIdentity } from "@/lib/getCurrentUser";
 import { updatePresenceState } from "@/apps/presence/lib/presence";
 
@@ -19,7 +19,7 @@ type ShiftStatusButtonProps = {
 };
 
 export default function ShiftStatusButton({ user }: ShiftStatusButtonProps) {
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [activeShift, setActiveShift] = useState<ShiftLog | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

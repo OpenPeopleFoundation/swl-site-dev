@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/shared/ui/Card";
 import { MessageList } from "./components/MessageList";
 import { RichMessageInput } from "./components/RichMessageInput";
-import { getSupabaseBrowser } from "@/lib/supabase";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import type { ChatMessageRecord, ReactionRecord } from "./types";
 import { MediaModal } from "./components/MediaModal";
 
@@ -52,7 +52,7 @@ export default function ChatPage() {
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [replyTarget, setReplyTarget] = useState<ChatMessageRecord | null>(null);
   const [activeMedia, setActiveMedia] = useState<string | null>(null);
-  const supabase = useMemo(() => getSupabaseBrowser(), []);
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
 
   const channelId =
     process.env.NEXT_PUBLIC_CHAT_CHANNEL_ID ?? FALLBACK_CHANNEL_ID;

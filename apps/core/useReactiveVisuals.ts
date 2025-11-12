@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { createSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 export function useReactiveVisuals() {
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
+    const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
 
     const channel = supabase.channel("activity-reflections");

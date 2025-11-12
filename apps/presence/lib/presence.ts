@@ -1,7 +1,7 @@
 "use client";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
-import { createSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import type { StaffIdentity } from "@/lib/getCurrentUser";
 
 type PresenceState = "online" | "on-shift" | "away";
@@ -50,7 +50,7 @@ export function initPresence(
   user: StaffIdentity,
   initialState: PresenceState = "online",
 ) {
-  const supabase = createSupabaseBrowserClient();
+  const supabase = getSupabaseBrowserClient();
   if (!supabase || typeof window === "undefined") {
     return () => undefined;
   }

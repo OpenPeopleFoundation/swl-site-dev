@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getSupabaseBrowser } from "@/lib/supabase";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 type RichMessageInputProps = {
   channelId: string;
@@ -37,7 +37,7 @@ export function RichMessageInput({
   const [gifResults, setGifResults] = useState<GifResult[]>([]);
   const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
-  const supabase = useMemo(() => getSupabaseBrowser(), []);
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const bucketName =
     process.env.NEXT_PUBLIC_CHAT_BUCKET?.trim() || "chat_uploads";
 

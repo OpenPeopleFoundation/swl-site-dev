@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 
 export type StaffIdentity = {
   id: string;
@@ -17,8 +17,7 @@ function buildAvatar(nameOrEmail: string) {
 export async function getCurrentUser(
   client?: SupabaseClient | null,
 ): Promise<StaffIdentity | null> {
-  const supabase = client ?? createSupabaseBrowserClient();
-  if (!supabase) return null;
+  const supabase = client ?? getSupabaseBrowserClient();
 
   const { data, error } = await supabase.auth.getUser();
   if (error || !data?.user) return null;

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import ChatBox from "@/apps/chat/components/ChatBox";
+import AuthDiagnostics from "@/apps/chat/components/AuthDiagnostics";
 import PresenceSidebar from "@/shared/ui/PresenceSidebar";
 import { useMessageAlert } from "@/apps/chat/hooks/useMessageAlert";
 
@@ -111,6 +112,7 @@ export default function FloatingChat() {
           </motion.div>
         )}
       </AnimatePresence>
+      {process.env.NODE_ENV !== "production" && <AuthDiagnostics />}
     </>
   );
 }

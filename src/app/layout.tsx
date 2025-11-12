@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import FloatingChat from "@/shared/ui/FloatingChat";
 import AmbientScene from "@/shared/ui/AmbientScene";
+import { AuthWatcher } from "@/apps/core/AuthWatcher";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -46,6 +47,7 @@ export default function RootLayout({
         data-site-mode={process.env.NEXT_PUBLIC_SITE_MODE ?? "staff"}
       >
         <AmbientScene />
+        <AuthWatcher />
         {children}
         <FloatingChat />
       </body>

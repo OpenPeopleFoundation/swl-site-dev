@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createSupabaseBrowserClient } from "@/lib/supabaseClient";
+import { getSupabaseBrowserClient } from "@/lib/supabaseClient";
 import {
   getCurrentUser,
   type StaffIdentity,
@@ -21,7 +21,7 @@ type UseChatOptions = {
 };
 
 export function useChat({ channelId = "global-chat" }: UseChatOptions = {}) {
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const ready = Boolean(supabase);
 
   const [user, setUser] = useState<StaffIdentity | null>(null);
