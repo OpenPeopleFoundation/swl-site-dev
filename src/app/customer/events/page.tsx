@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { CustomerEventWizard } from "@/apps/customer/components/CustomerEventWizard";
@@ -32,7 +33,12 @@ export default async function CustomerEventsPage() {
       redirect("/gate?next=/customer/events");
     }
     const supabase = getSupabaseAdmin();
+    const supabaseUserId = await ensureSupabaseUserId(
+      currentSession.email,
+      supabase,
+    );
     const payload = {
+      user_id: supabaseUserId,
       guest_name: formData.get("guest_name")?.toString() ?? "Guest",
       organization: null,
       guest_email: currentSession.email,
@@ -203,6 +209,38 @@ function composeSpecialRequests(formData: FormData) {
     dietary ? `Dietary notes: ${dietary}` : "",
   ].filter(Boolean);
   return sections.length ? sections.join("\n\n") : null;
+}
+
+async function ensureSupabaseUserId(
+  email: string,
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+) {
+  const lower = email.toLowerCase();
+  const { data, error } = await supabase.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
+  if (error) {
+    throw new Error("Unable to list Supabase users");
+  }
+  let user =
+    data.users?.find(
+      (candidate) => candidate.email?.toLowerCase() === lower,
+    ) ?? null;
+  if (!user) {
+    const { data: created, error: createError } =
+      await supabase.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        password: randomUUID(),
+        user_metadata: { source: "customer-portal" },
+      });
+    if (createError || !created?.user) {
+      throw new Error("Unable to create Supabase Auth user");
+    }
+    user = created.user;
+  }
+  return user.id;
 }
 
 async function createEarlyReservation(formData: FormData, email: string) {
