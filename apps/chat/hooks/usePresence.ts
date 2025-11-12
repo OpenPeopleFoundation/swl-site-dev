@@ -12,6 +12,15 @@ type PresenceIdentity = {
   avatar_url?: string | null;
 };
 
+type PresencePayload = {
+  user_id: string;
+  name?: string | null;
+  role?: string | null;
+  avatar_url?: string | null;
+  state?: "online" | "away";
+  last_active?: string;
+};
+
 export function usePresence(identity?: PresenceIdentity | null) {
   const supabase = supabaseBrowser;
   const [onlineUsers, setOnlineUsers] = useState<PresenceUser[]>([]);
@@ -29,17 +38,21 @@ export function usePresence(identity?: PresenceIdentity | null) {
     });
 
     channel.on("presence", { event: "sync" }, () => {
-      const state = channel.presenceState<Record<string, PresenceUser[]>>();
-      const flattened = Object.values(state)
-        .flat()
-        .map((entry) => ({
-          user_id: entry.user_id,
-          name: entry.name,
-          role: entry.role,
-          avatar_url: entry.avatar_url,
-          state: entry.state ?? "online",
-          last_active: entry.last_active,
-        }));
+      const state = channel.presenceState<Record<string, PresencePayload[]>>();
+      const groups = Object.values(state) as unknown as PresencePayload[][];
+      const flattened: PresenceUser[] = [];
+      groups.forEach((group) => {
+        group.forEach((entry) => {
+          flattened.push({
+            user_id: entry.user_id,
+            name: entry.name,
+            role: entry.role,
+            avatar_url: entry.avatar_url,
+            state: entry.state ?? "online",
+            last_active: entry.last_active,
+          });
+        });
+      });
       setOnlineUsers(flattened);
     });
 

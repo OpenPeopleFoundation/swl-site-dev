@@ -2,6 +2,7 @@
 
 import { startTransition, useCallback, useEffect, useState } from "react";
 import type {
+  RealtimePostgresDeletePayload,
   RealtimePostgresInsertPayload,
   RealtimePostgresUpdatePayload,
 } from "@supabase/supabase-js";
@@ -72,14 +73,19 @@ function normalizeMessage(row: SupabaseMessageRow): ChatMessageRecord {
     edited_at: row.edited_at ?? null,
     deleted: row.deleted ?? false,
     deleted_at: row.deleted_at ?? null,
-    staff: row.staff
-      ? ({
-          id: row.staff.id,
-          full_name: row.staff.full_name,
-          avatar_url: row.staff.avatar_url,
-          role: row.staff.role,
-        } as StaffProfile)
-      : null,
+    staff: (() => {
+      const record = Array.isArray(row.staff)
+        ? (row.staff[0] as StaffProfile | undefined)
+        : (row.staff as StaffProfile | undefined);
+      return record
+        ? {
+            id: record.id,
+            full_name: record.full_name,
+            avatar_url: record.avatar_url,
+            role: record.role,
+          }
+        : null;
+    })(),
     reactions: Array.isArray(row.reactions)
       ? (row.reactions as ReactionRecord[])
       : [],
@@ -245,14 +251,21 @@ export function useRealtimeChat(channelIdentifier?: string) {
     const reactionChannel = supabase
       .channel(`chat:reactions:${resolvedChannel}`)
       .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "message_reactions" },
+        "postgres_changes" as any,
+        {
+          event: "*",
+          schema: "public",
+          table: "message_reactions",
+        } as any,
         async (
           payload:
             | RealtimePostgresInsertPayload<ReactionRow>
-            | RealtimePostgresUpdatePayload<ReactionRow>,
+            | RealtimePostgresUpdatePayload<ReactionRow>
+            | RealtimePostgresDeletePayload<ReactionRow>,
         ) => {
-          const messageId = payload.new?.message_id ?? payload.old?.message_id;
+          const messageId =
+            (payload.new as Partial<ReactionRow> | undefined)?.message_id ??
+            (payload.old as Partial<ReactionRow> | undefined)?.message_id;
           if (!messageId) return;
           const fresh = await fetchMessageById(messageId);
           if (!fresh) return;

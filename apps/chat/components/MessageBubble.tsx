@@ -152,7 +152,9 @@ export function MessageBubble({
             messageId={message.id}
             reactions={message.reactions}
             currentUserId={currentUserId}
-            onReact={(emoji) => onReact(message.id, emoji)}
+            onToggleReaction={(emoji, targetMessageId) =>
+              onReact(targetMessageId, emoji)
+            }
           />
         )}
       </div>

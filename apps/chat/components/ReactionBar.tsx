@@ -10,14 +10,14 @@ type ReactionBarProps = {
   messageId: string;
   reactions?: ReactionRecord[];
   currentUserId?: string;
-  onReact: (emoji: string) => void;
+  onToggleReaction: (emoji: string, messageId: string) => void;
 };
 
 export function ReactionBar({
   messageId,
   reactions = [],
   currentUserId,
-  onReact,
+  onToggleReaction,
 }: ReactionBarProps) {
   const grouped = useMemo(() => {
     const map = new Map<
@@ -27,6 +27,7 @@ export function ReactionBar({
         mine: boolean;
       }
     >();
+
     reactions.forEach((reaction) => {
       const entry = map.get(reaction.reaction_type) ?? {
         count: 0,
@@ -38,16 +39,18 @@ export function ReactionBar({
       }
       map.set(reaction.reaction_type, entry);
     });
+
     return Array.from(map.entries());
   }, [reactions, currentUserId]);
 
   return (
     <div className="flex flex-wrap items-center gap-1">
+      {/* Existing Reactions */}
       {grouped.map(([emoji, meta]) => (
         <motion.button
           key={`${messageId}-${emoji}`}
           type="button"
-          onClick={() => onReact(emoji)}
+          onClick={() => onToggleReaction(emoji, messageId)}
           whileTap={{ scale: 0.9 }}
           className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition ${
             meta.mine
@@ -60,11 +63,12 @@ export function ReactionBar({
         </motion.button>
       ))}
 
+      {/* Default Add Reactions */}
       {DEFAULT_REACTIONS.map((emoji) => (
         <motion.button
           key={`add-${messageId}-${emoji}`}
           type="button"
-          onClick={() => onReact(emoji)}
+          onClick={() => onToggleReaction(emoji, messageId)}
           whileTap={{ scale: 0.9 }}
           className="rounded-full border border-white/10 px-2 py-1 text-xs text-white/60 transition hover:border-white/40 hover:text-white"
         >

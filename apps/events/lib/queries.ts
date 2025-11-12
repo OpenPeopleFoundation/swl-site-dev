@@ -39,8 +39,7 @@ export type OpeningReservation = {
   created_at?: string | null;
 };
 
-const baseColumns =
-  "id, guest_name, guest_email, organization, event_type, party_size, preferred_date, start_time, end_time, menu_style, budget_range, special_requests, status, proposal_text, proposal_pdf_url, deposit_amount, deposit_paid, photos, reflection_prompt_sent, notes_internal, created_at, updated_at";
+const baseColumns = "*";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
