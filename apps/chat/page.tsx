@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/shared/ui/Card";
 import { MessageList } from "./components/MessageList";
-import { MessageInput } from "./components/MessageInput";
+import { RichMessageInput } from "./components/RichMessageInput";
 import { getSupabaseBrowser } from "@/lib/supabase";
 import type { ChatMessageRecord, ReactionRecord } from "./types";
+import { MediaModal } from "./components/MediaModal";
 
 const FALLBACK_CHANNEL_ID = "00000000-0000-0000-0000-000000000000";
 const FALLBACK_USER_ID = "local-user";
@@ -21,6 +22,7 @@ type SupabaseMessageRow = {
   gif_url?: string | null;
   user_id: string;
   channel_id?: string | null;
+  parent_id?: string | null;
   created_at: string;
   users?: { full_name?: string | null; avatar_url?: string | null }[] | null;
   reactions?: ReactionRecord[] | null;
@@ -46,6 +48,8 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessageRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [replyTarget, setReplyTarget] = useState<ChatMessageRecord | null>(null);
+  const [activeMedia, setActiveMedia] = useState<string | null>(null);
   const supabase = useMemo(() => getSupabaseBrowser(), []);
 
   const channelId =
@@ -61,15 +65,53 @@ export default function ChatPage() {
   const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(
     null,
   );
+  const pendingEmotionRef = useRef<Set<string>>(new Set());
+
+  const classifyMessageEmotion = useCallback(
+    async (message: ChatMessageRecord) => {
+      if (!message.content) return;
+      if (pendingEmotionRef.current.has(message.id)) return;
+      pendingEmotionRef.current.add(message.id);
+      try {
+        const response = await fetch("/api/chat/emotion", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: message.content }),
+        });
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          label?: string;
+          confidence?: number;
+        };
+        if (payload.label) {
+          await supabase
+            .from("messages")
+            .update({
+              emotion_label: payload.label,
+              emotion_confidence: payload.confidence ?? null,
+            })
+            .eq("id", message.id);
+        }
+      } catch (error) {
+        console.error("Emotion classify failed", error);
+      } finally {
+        pendingEmotionRef.current.delete(message.id);
+      }
+    },
+    [supabase],
+  );
 
   useEffect(() => {
     let isMounted = true;
 
-    const normalizeMessage = (message: SupabaseMessageRow): ChatMessageRecord => ({
+    const normalizeMessage = (
+      message: SupabaseMessageRow,
+    ): ChatMessageRecord => ({
       ...message,
       content: message.content ?? null,
       image_url: message.image_url ?? null,
       gif_url: message.gif_url ?? null,
+      parent_id: message.parent_id ?? null,
       emotion_label: inferEmotion(message.content),
       users: Array.isArray(message?.users)
         ? message.users[0] ?? null
@@ -90,6 +132,11 @@ export default function ChatPage() {
       if (!error) {
         const normalized = (data ?? []).map(normalizeMessage);
         setMessages(normalized);
+        normalized.forEach((message) => {
+          if (!message.emotion_label && message.content) {
+            void classifyMessageEmotion(message);
+          }
+        });
       }
       setIsLoading(false);
     }
@@ -127,6 +174,9 @@ export default function ChatPage() {
             }
             return [...prev, normalized];
           });
+          if (!normalized.emotion_label && normalized.content) {
+            void classifyMessageEmotion(normalized);
+          }
         },
       )
       .subscribe();
@@ -137,11 +187,11 @@ export default function ChatPage() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "reactions" },
         (payload) => {
-          const reaction = payload.new as ReactionRecord;
-          setMessages((prev) =>
-            prev.map((message) =>
-              message.id === reaction.message_id
-                ? {
+        const reaction = payload.new as ReactionRecord;
+        setMessages((prev) =>
+          prev.map((message) =>
+            message.id === reaction.message_id
+              ? {
                     ...message,
                     reactions: [...(message.reactions ?? []), reaction],
                   }
@@ -207,7 +257,7 @@ export default function ChatPage() {
         typingChannelRef.current = null;
       }
     };
-  }, [channelId, supabase]);
+  }, [channelId, supabase, classifyMessageEmotion]);
 
   function handleTypingSignal(isTyping: boolean) {
     typingChannelRef.current?.send({
@@ -239,18 +289,29 @@ export default function ChatPage() {
   async function handleRecapRequest() {
     const recent = messages.slice(-SUMMARY_BULLETS);
     if (recent.length === 0) return;
-    const summary = recent
-      .map((message) => {
-        const name = message.users?.full_name ?? "Staff";
-        return `• ${name}: ${message.content ?? "[media]"}`;
-      })
-      .join("\n");
+    const payload = recent.map((message) => ({
+      author: message.users?.full_name ?? "Staff",
+      content:
+        message.content ??
+        (message.image_url || message.gif_url ? "[media]" : ""),
+    }));
 
-    await supabase.from("messages").insert({
-      content: `Service Recap:\n${summary}`,
-      channel_id: channelId,
-      user_id: botUserId,
-    });
+    try {
+      const response = await fetch("/api/chat/recap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: payload }),
+      });
+      if (!response.ok) throw new Error("Recap failed");
+      const data = (await response.json()) as { summary?: string };
+      await supabase.from("messages").insert({
+        content: data.summary ?? "Recap unavailable.",
+        channel_id: channelId,
+        user_id: botUserId,
+      });
+    } catch (error) {
+      console.error("Recap request failed", error);
+    }
   }
 
   return (
@@ -274,16 +335,33 @@ export default function ChatPage() {
               isLoading={isLoading}
               typingUsers={typingUsers}
               onToggleReaction={handleToggleReaction}
+              onReply={(message) => setReplyTarget(message)}
+              onMediaSelect={(url) => setActiveMedia(url)}
             />
-            <MessageInput
+            <RichMessageInput
               channelId={channelId}
               userId={currentUserId}
               onRecapRequest={handleRecapRequest}
               onTypingSignal={handleTypingSignal}
+              replyTo={
+                replyTarget
+                  ? {
+                      id: replyTarget.id,
+                      content: replyTarget.content,
+                      author: replyTarget.users?.full_name ?? "Staff",
+                    }
+                  : null
+              }
+              onCancelReply={() => setReplyTarget(null)}
             />
           </div>
         </Card>
       </div>
+      <MediaModal
+        url={activeMedia}
+        isOpen={Boolean(activeMedia)}
+        onClose={() => setActiveMedia(null)}
+      />
     </main>
   );
 }

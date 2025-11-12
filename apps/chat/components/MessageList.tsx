@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { ChatMessageRecord } from "../types";
 import { ChatMessage } from "./ChatMessage";
 
@@ -10,6 +10,8 @@ type MessageListProps = {
   isLoading?: boolean;
   typingUsers?: string[];
   onToggleReaction: (emoji: string, messageId: string) => void;
+  onReply: (message: ChatMessageRecord) => void;
+  onMediaSelect: (url: string) => void;
 };
 
 export function MessageList({
@@ -18,8 +20,15 @@ export function MessageList({
   isLoading = false,
   typingUsers = [],
   onToggleReaction,
+  onReply,
+  onMediaSelect,
 }: MessageListProps) {
   const endRef = useRef<HTMLDivElement | null>(null);
+  const messageLookup = useMemo(() => {
+    const map = new Map<string, ChatMessageRecord>();
+    messages.forEach((message) => map.set(message.id, message));
+    return map;
+  }, [messages]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -42,6 +51,13 @@ export function MessageList({
                 isSelf={message.user_id === currentUserId}
                 currentUserId={currentUserId}
                 onToggleReaction={onToggleReaction}
+                onReply={onReply}
+                onMediaSelect={onMediaSelect}
+                parentMessage={
+                  message.parent_id
+                    ? messageLookup.get(message.parent_id) ?? null
+                    : null
+                }
               />
             ))}
             {typingUsers.length > 0 && (

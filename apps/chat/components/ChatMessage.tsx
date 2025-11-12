@@ -10,6 +10,9 @@ type ChatMessageProps = {
   isSelf: boolean;
   currentUserId: string;
   onToggleReaction: (emoji: string, messageId: string) => void;
+  onReply: (message: ChatMessageRecord) => void;
+  onMediaSelect: (url: string) => void;
+  parentMessage?: ChatMessageRecord | null;
 };
 
 const timeFormatter = new Intl.DateTimeFormat("en-US", {
@@ -22,6 +25,9 @@ export function ChatMessage({
   isSelf,
   currentUserId,
   onToggleReaction,
+  onReply,
+  onMediaSelect,
+  parentMessage,
 }: ChatMessageProps) {
   const timestamp = message.created_at
     ? timeFormatter.format(new Date(message.created_at))
@@ -58,8 +64,25 @@ export function ChatMessage({
         <div
           className={`mt-1 w-fit max-w-full px-4 py-2 text-sm shadow-[0_10px_30px_rgba(0,0,0,0.25)] ${bubbleClasses}`}
         >
+          {parentMessage && (
+            <button
+              type="button"
+              onClick={() => onReply(parentMessage)}
+              className="mb-2 w-full rounded-2xl border border-white/15 bg-white/5 px-3 py-2 text-xs text-white/70 text-left"
+            >
+              Replying to{" "}
+              <span className="font-medium">
+                {parentMessage.users?.full_name ?? "Staff"}
+              </span>
+              : {parentMessage.content ?? "[media]"}
+            </button>
+          )}
           {message.content}
-          <MediaPreview imageUrl={message.image_url} gifUrl={message.gif_url} />
+          <MediaPreview
+            imageUrl={message.image_url}
+            gifUrl={message.gif_url}
+            onSelect={onMediaSelect}
+          />
           {message.emotion_label && (
             <div className="mt-2 text-[10px] uppercase tracking-[0.3em] text-white/60">
               {message.emotion_label}
@@ -67,12 +90,21 @@ export function ChatMessage({
           )}
         </div>
         <span className="mt-1 text-xs text-white/40">{timestamp}</span>
-        <ReactionBar
-          messageId={message.id}
-          reactions={message.reactions ?? []}
-          currentUserId={currentUserId}
-          onToggleReaction={onToggleReaction}
-        />
+        <div className="mt-1 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => onReply(message)}
+            className="text-xs text-white/60 hover:text-white"
+          >
+            Reply
+          </button>
+          <ReactionBar
+            messageId={message.id}
+            reactions={message.reactions ?? []}
+            currentUserId={currentUserId}
+            onToggleReaction={onToggleReaction}
+          />
+        </div>
       </div>
     </div>
   );

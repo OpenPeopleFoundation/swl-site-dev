@@ -1,13 +1,17 @@
-"use client";
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getSupabaseBrowser } from "@/lib/supabase";
 
-type MessageInputProps = {
+type RichMessageInputProps = {
   channelId: string;
   userId: string;
   onRecapRequest: () => Promise<void>;
   onTypingSignal: (isTyping: boolean) => void;
+  replyTo?: {
+    id: string;
+    content: string | null;
+    author?: string | null;
+  } | null;
+  onCancelReply: () => void;
 };
 
 type GifResult = {
@@ -18,12 +22,14 @@ type GifResult = {
 
 const GIF_API = "https://tenor.googleapis.com/v2/search";
 
-export function MessageInput({
+export function RichMessageInput({
   channelId,
   userId,
   onRecapRequest,
   onTypingSignal,
-}: MessageInputProps) {
+  replyTo,
+  onCancelReply,
+}: RichMessageInputProps) {
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -32,6 +38,8 @@ export function MessageInput({
   const [isGifPickerOpen, setIsGifPickerOpen] = useState(false);
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
   const supabase = useMemo(() => getSupabaseBrowser(), []);
+  const bucketName =
+    process.env.NEXT_PUBLIC_CHAT_BUCKET?.trim() || "chat_uploads";
 
   useEffect(() => {
     return () => {
@@ -76,10 +84,10 @@ export function MessageInput({
       if (mediaFile) {
         const path = `${channelId}/${Date.now()}-${mediaFile.name}`;
         const { error: uploadError } = await supabase.storage
-          .from("chat_uploads")
+          .from(bucketName)
           .upload(path, mediaFile, { upsert: true });
         if (uploadError) throw uploadError;
-        const { data } = supabase.storage.from("chat_uploads").getPublicUrl(path);
+        const { data } = supabase.storage.from(bucketName).getPublicUrl(path);
         imageUrl = data.publicUrl;
       }
 
@@ -89,6 +97,7 @@ export function MessageInput({
         user_id: userId,
         image_url: imageUrl,
         gif_url: extra?.gifUrl ?? null,
+        parent_id: replyTo?.id ?? null,
       });
 
       setText("");
@@ -98,6 +107,7 @@ export function MessageInput({
       setGifResults([]);
       setIsGifPickerOpen(false);
       onTypingSignal(false);
+      onCancelReply();
     } finally {
       setIsSending(false);
     }
@@ -142,6 +152,25 @@ export function MessageInput({
 
   return (
     <div className="mt-4 space-y-3">
+      {replyTo && (
+        <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+          <div>
+            Replying to{" "}
+            <span className="font-semibold">
+              {replyTo.author ?? "Staff"}
+            </span>
+            : {replyTo.content ?? "[media]"}
+          </div>
+          <button
+            type="button"
+            onClick={onCancelReply}
+            className="text-white/60 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {mediaPreview && (
         <div className="relative w-32 overflow-hidden rounded-2xl border border-white/10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -204,17 +233,17 @@ export function MessageInput({
           GIF
         </button>
         <input
-        type="text"
-        value={text}
-        placeholder="Send a message…"
-        onChange={(event) => {
-          setText(event.target.value);
-          emitTypingSignal();
-        }}
-        onBlur={() => onTypingSignal(false)}
-        className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/50"
-        disabled={isSending}
-      />
+          type="text"
+          value={text}
+          placeholder="Send a message…"
+          onChange={(event) => {
+            setText(event.target.value);
+            emitTypingSignal();
+          }}
+          onBlur={() => onTypingSignal(false)}
+          className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/50"
+          disabled={isSending}
+        />
         <button
           type="submit"
           disabled={isSending || (!text.trim() && !mediaFile)}
@@ -227,4 +256,4 @@ export function MessageInput({
   );
 }
 
-export default MessageInput;
+export default RichMessageInput;

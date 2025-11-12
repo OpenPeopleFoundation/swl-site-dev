@@ -12,8 +12,10 @@ export type ChatMessageRecord = {
   gif_url?: string | null;
   user_id: string;
   channel_id?: string | null;
+  parent_id?: string | null;
   created_at: string;
-  emotion_label?: string;
+  emotion_label?: string | null;
+  emotion_confidence?: number | null;
   users?: {
     full_name?: string | null;
     avatar_url?: string | null;

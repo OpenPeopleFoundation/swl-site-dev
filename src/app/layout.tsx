@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
+import FloatingChat from "@/shared/ui/FloatingChat";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -12,6 +14,13 @@ const spaceGrotesk = Space_Grotesk({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+const eurostile = localFont({
+  src: "../fonts/Eurostile.otf",
+  variable: "--font-eurostile",
+  weight: "400",
   display: "swap",
 });
 
@@ -29,10 +38,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-space-gradient">
       <body
-        className={`${spaceGrotesk.variable} ${inter.variable} font-body antialiased bg-space-gradient text-white`}
+        className={`${spaceGrotesk.variable} ${inter.variable} ${eurostile.variable} font-body antialiased bg-space-gradient text-white`}
         data-site-mode={process.env.NEXT_PUBLIC_SITE_MODE ?? "staff"}
       >
         {children}
+        <FloatingChat />
       </body>
     </html>
   );
