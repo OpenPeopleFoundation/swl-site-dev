@@ -1,10 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormState, useFormStatus } from "react-dom";
+
+export type WizardActionState =
+  | { status: "idle" }
+  | { status: "success"; message?: string }
+  | { status: "error"; message?: string };
 
 type WizardProps = {
-  action: (formData: FormData) => Promise<void>;
+  action: (
+    prevState: WizardActionState,
+    formData: FormData,
+  ) => Promise<WizardActionState>;
   defaultName: string;
+  initialState: WizardActionState;
 };
 
 type WizardState = {
@@ -47,10 +57,15 @@ const INITIAL_STATE = (defaultName: string): WizardState => ({
   budget_range: "",
 });
 
-export function CustomerEventWizard({ action, defaultName }: WizardProps) {
+export function CustomerEventWizard({
+  action,
+  defaultName,
+  initialState,
+}: WizardProps) {
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<WizardState>(() => INITIAL_STATE(defaultName));
+  const [result, formAction] = useFormState(action, initialState);
 
   const summary = useMemo(
     () => [
@@ -102,6 +117,39 @@ export function CustomerEventWizard({ action, defaultName }: WizardProps) {
   function prevStep() {
     setError(null);
     setStep((prev) => Math.max(prev - 1, 1));
+  }
+
+  if (result.status === "success") {
+    return (
+      <div className="mt-6 rounded-3xl border border-white/10 bg-black/40 p-6 text-white shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
+        <h3 className="text-2xl font-light">Request confirmed</h3>
+        <p className="mt-2 text-sm text-white/70">
+          {result.message ??
+            "Your event is now with our hospitality team. Expect a proposal shortly."}
+        </p>
+        <ul className="mt-6 space-y-3 text-sm text-white/70">
+          <li>• The requested slot is temporarily held while we design your menu.</li>
+          <li>• You’ll receive a PDF proposal + contract inside this dashboard and via email.</li>
+          <li>
+            • Need adjustments? Email{" "}
+            <a
+              href="mailto:tom@snowwhitelaundry.co"
+              className="text-white underline-offset-2 hover:underline"
+            >
+              tom@snowwhitelaundry.co
+            </a>{" "}
+            or{" "}
+            <a
+              href="mailto:ken@snowwhitelaundry.co"
+              className="text-white underline-offset-2 hover:underline"
+            >
+              ken@snowwhitelaundry.co
+            </a>
+            .
+          </li>
+        </ul>
+      </div>
+    );
   }
 
   return (
@@ -276,19 +324,19 @@ export function CustomerEventWizard({ action, defaultName }: WizardProps) {
               </div>
             ))}
           </dl>
-          <form action={action} className="mt-6 space-y-3">
+          <form action={formAction} className="mt-6 space-y-3">
             {Object.entries(state).map(([key, value]) => (
               <input key={key} type="hidden" name={key} value={value} />
             ))}
-            <button
-              type="submit"
-              className="w-full rounded-2xl bg-[#2A63FF] py-3 text-sm uppercase tracking-[0.3em] text-white transition hover:bg-[#244eda]"
-            >
-              Send Proposal Request
-            </button>
+            <SubmitButton />
             <p className="text-center text-xs text-white/60">
               Deposits are only collected after you approve the proposal.
             </p>
+            {result.status === "error" && (
+              <p className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-center text-sm text-red-200">
+                {result.message ?? "Something went wrong. Please try again."}
+              </p>
+            )}
           </form>
         </StepCard>
       )}
@@ -313,6 +361,19 @@ export function CustomerEventWizard({ action, defaultName }: WizardProps) {
         )}
       </div>
     </div>
+  );
+}
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      className="w-full rounded-2xl bg-[#2A63FF] py-3 text-sm uppercase tracking-[0.3em] text-white transition hover:bg-[#244eda] disabled:opacity-60"
+      disabled={pending}
+    >
+      {pending ? "Sending…" : "Send Proposal Request"}
+    </button>
   );
 }
 

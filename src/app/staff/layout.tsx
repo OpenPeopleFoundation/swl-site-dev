@@ -42,23 +42,26 @@ export default function StaffLayout({ children }: { children: ReactNode }) {
               Authenticated
             </span>
           </div>
-          <nav className="mt-4 flex flex-wrap gap-2 text-sm">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`rounded-full border px-4 py-2 transition ${
-                    isActive
-                      ? "border-accent/60 bg-accent/10 text-white"
-                      : "border-white/10 text-white/70 hover:border-accent/40 hover:text-white"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+          <nav className="mt-4 w-full text-sm">
+            <div className="flex gap-3 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible">
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`flex min-w-[120px] flex-1 items-center justify-center rounded-2xl border px-4 py-2 text-center transition sm:min-w-0 ${
+                      isActive
+                        ? "border-white/80 bg-white/15 text-white shadow-[0_10px_35px_rgba(42,99,255,0.35)]"
+                        : "border-white/10 bg-white/5 text-white/70 hover:border-white/40 hover:text-white"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
           </nav>
         </header>
 

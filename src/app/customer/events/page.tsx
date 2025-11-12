@@ -1,7 +1,10 @@
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { CustomerEventWizard } from "@/apps/customer/components/CustomerEventWizard";
+import {
+  CustomerEventWizard,
+  type WizardActionState,
+} from "@/apps/customer/components/CustomerEventWizard";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { listEventsForGuest } from "@/apps/events/lib/queries";
 import { getSessionFromCookies } from "@/lib/session";
@@ -26,44 +29,65 @@ export default async function CustomerEventsPage() {
 
   const events = await listEventsForGuest(session.email);
 
-  async function handleCreate(formData: FormData) {
+  const initialActionState: WizardActionState = { status: "idle" };
+
+  async function handleCreate(
+    _prevState: WizardActionState,
+    formData: FormData,
+  ): Promise<WizardActionState> {
     "use server";
-    const currentSession = await getSessionFromCookies();
-    if (!currentSession) {
-      redirect("/gate?next=/customer/events");
+    try {
+      const currentSession = await getSessionFromCookies();
+      if (!currentSession) {
+        redirect("/gate?next=/customer/events");
+      }
+      const supabase = getSupabaseAdmin();
+      const supabaseUserId = await ensureSupabaseUserId(
+        currentSession.email,
+        supabase,
+      );
+      const payload = {
+        user_id: supabaseUserId,
+        guest_name: formData.get("guest_name")?.toString() ?? "Guest",
+        organization: null,
+        guest_email: currentSession.email,
+        event_type:
+          formData.get("event_type")?.toString() ?? "Private Experience",
+        party_size: Number(formData.get("party_size")) || null,
+        preferred_date: formData.get("preferred_date")?.toString() ?? null,
+        start_time: formData.get("start_time")?.toString() ?? null,
+        end_time: formData.get("end_time")?.toString() ?? null,
+        menu_style: formData.get("menu_style")?.toString() ?? null,
+        budget_range: formData.get("budget_range")?.toString() ?? null,
+        special_requests: composeSpecialRequests(formData),
+        status: "inquiry",
+      };
+
+      const { error } = await supabase
+        .from("private_events")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      await notifyEventTeam(currentSession.email, payload);
+      revalidatePath("/customer/events");
+      return {
+        status: "success",
+        message: "Your request is in the queue. We’ll email you shortly.",
+      };
+    } catch (error) {
+      console.error("Event submission failed", error);
+      return {
+        status: "error",
+        message:
+          (error as Error).message ||
+          "Unable to submit right now. Please try again.",
+      };
     }
-    const supabase = getSupabaseAdmin();
-    const supabaseUserId = await ensureSupabaseUserId(
-      currentSession.email,
-      supabase,
-    );
-    const payload = {
-      user_id: supabaseUserId,
-      guest_name: formData.get("guest_name")?.toString() ?? "Guest",
-      organization: null,
-      guest_email: currentSession.email,
-      event_type: formData.get("event_type")?.toString() ?? "Private Experience",
-      party_size: Number(formData.get("party_size")) || null,
-      preferred_date: formData.get("preferred_date")?.toString() ?? null,
-      start_time: formData.get("start_time")?.toString() ?? null,
-      end_time: formData.get("end_time")?.toString() ?? null,
-      menu_style: formData.get("menu_style")?.toString() ?? null,
-      budget_range: formData.get("budget_range")?.toString() ?? null,
-      special_requests: composeSpecialRequests(formData),
-      status: "inquiry",
-    };
-
-    const { error } = await supabase
-      .from("private_events")
-      .insert(payload)
-      .select("id")
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    revalidatePath("/customer/events");
   }
 
   return (
@@ -88,6 +112,7 @@ export default async function CustomerEventsPage() {
         <CustomerEventWizard
           action={handleCreate}
           defaultName={session.email.split("@")[0]}
+          initialState={initialActionState}
         />
       </section>
 
@@ -243,6 +268,80 @@ async function ensureSupabaseUserId(
   return user.id;
 }
 
+async function notifyEventTeam(
+  guestEmail: string,
+  payload: Record<string, unknown>,
+) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn(
+      "RESEND_API_KEY not configured. Skipping event email notification.",
+    );
+    return;
+  }
+  const detailRows = [
+    { label: "Guest", value: (payload.guest_name ?? "Guest") as string },
+    { label: "Email", value: guestEmail },
+    { label: "Event Type", value: (payload.event_type ?? "Private Experience") as string },
+    { label: "Preferred Date", value: (payload.preferred_date ?? "TBD") as string },
+    { label: "Party Size", value: String(payload.party_size ?? "TBD") },
+    { label: "Menu Style", value: (payload.menu_style ?? "Chef's choice") as string },
+    { label: "Budget Range", value: (payload.budget_range ?? "Custom") as string },
+  ];
+  const plainText = detailRows.map((row) => `${row.label}: ${row.value}`).join("\n");
+  const html = `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; padding: 24px; background-color: #070910; color: #ECEFF6;">
+      <h1 style="font-weight: 300; margin-bottom: 8px;">New Private Event Request</h1>
+      <p style="margin: 0 0 20px; color: #9CA3C1;">Submitted via customer portal</p>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        ${detailRows
+          .map(
+            (row) => `
+              <tr>
+                <td style="padding: 10px 6px; border-bottom: 1px solid #1b2033; text-transform: uppercase; font-size: 11px; letter-spacing: 0.2em; color: #7C86AF;">
+                  ${row.label}
+                </td>
+                <td style="padding: 10px 6px; border-bottom: 1px solid #1b2033; font-size: 14px; color: #F7F9FF;">
+                  ${row.value}
+                </td>
+              </tr>`,
+          )
+          .join("")}
+      </table>
+      ${
+        payload.special_requests
+          ? `<div style="margin-top: 12px;">
+              <h3 style="margin: 0 0 8px; font-weight: 400; color: #AEB6D9;">Guest Notes</h3>
+              <p style="white-space: pre-line; margin: 0; color: #ECEFF6;">${payload.special_requests}</p>
+            </div>`
+          : ""
+      }
+      <p style="margin-top: 24px; font-size: 13px; color: #9CA3C1;">
+        Reply to this email to reach the guest directly.
+      </p>
+    </div>
+  `;
+
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: "Snow White Laundry <noreply@snowwhitelaundry.co>",
+        to: ["tom@snowwhitelaundry.co", "ken@snowwhitelaundry.co"],
+        subject: "New private event inquiry submitted",
+        text: plainText,
+        html,
+      }),
+    });
+  } catch (error) {
+    console.error("Failed to notify event team", error);
+  }
+}
+
 async function createEarlyReservation(formData: FormData, email: string) {
   "use server";
   const supabase = getSupabaseAdmin();
@@ -257,6 +356,13 @@ async function createEarlyReservation(formData: FormData, email: string) {
 }
 
 function EarlyReservationForm({ email }: { email: string }) {
+  const OPENING_DATES = [
+    { label: "Thu · Apr 24", value: "2026-04-24" },
+    { label: "Fri · Apr 25", value: "2026-04-25" },
+    { label: "Sat · Apr 26", value: "2026-04-26" },
+  ];
+  const PARTY_SIZES = ["2", "4", "6", "8", "10+"];
+
   return (
     <form
       action={async (formData) => {
@@ -264,37 +370,65 @@ function EarlyReservationForm({ email }: { email: string }) {
         await createEarlyReservation(formData, email);
         revalidatePath("/customer/events");
       }}
-      className="mt-6 grid gap-4 md:grid-cols-2"
+      className="mt-6 space-y-6"
     >
-      <label className="text-sm text-white/70">
-        Preferred Date
-        <input
-          type="date"
-          name="opening_date"
-          min={new Date().toISOString().split("T")[0]}
-          max="2026-04-24"
-          className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
-        />
-      </label>
-      <label className="text-sm text-white/70">
-        Party Size
-        <input
-          type="number"
-          min={2}
-          name="opening_party"
-          className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
-        />
-      </label>
-      <label className="text-sm text-white/70 md:col-span-2">
-        Notes
+      <fieldset>
+        <legend className="text-sm uppercase tracking-[0.3em] text-white/50">
+          Opening nights
+        </legend>
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          {OPENING_DATES.map((slot) => (
+            <label
+              key={slot.value}
+              className="flex-1 min-w-[140px] cursor-pointer rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-center text-sm text-white/80 transition hover:border-white/50"
+            >
+              <input
+                type="radio"
+                name="opening_date"
+                value={slot.value}
+                defaultChecked={slot.value === OPENING_DATES[0].value}
+                className="sr-only"
+              />
+              {slot.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend className="text-sm uppercase tracking-[0.3em] text-white/50">
+          Party size
+        </legend>
+        <div className="mt-3 flex flex-wrap gap-3">
+          {PARTY_SIZES.map((size) => (
+            <label
+              key={size}
+              className="flex-1 min-w-[90px] cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-center text-sm text-white/80 transition hover:border-white/50"
+            >
+              <input
+                type="radio"
+                name="opening_party"
+                value={size}
+                defaultChecked={size === "4"}
+                className="sr-only"
+              />
+              {size} guests
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <label className="block text-sm text-white/70">
+        Notes (allergies, occasion, seating requests)
         <textarea
           name="opening_notes"
           rows={3}
-          placeholder="Any dietary notes or timing preferences?"
+          placeholder="e.g. Anniversary dinner, shellfish allergy, prefer counter."
           className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
         />
       </label>
-      <div className="md:col-span-2">
+
+      <div>
         <button
           type="submit"
           className="w-full rounded-2xl border border-white/20 px-4 py-3 text-sm uppercase tracking-[0.3em] text-white transition hover:border-white/60"
