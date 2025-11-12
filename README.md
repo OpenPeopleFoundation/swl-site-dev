@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Snow White Laundry — Staff Cortex
 
-## Getting Started
+Internal-only Next.js 15 dashboard that powers staff access to scheduling, menu building, inventory tracking, and Cortex reflections for [Snow White Laundry](https://ai.snowwhitelaundry.co). The app ships with the dark neon-blue visual language that mirrors the guest site and is designed to deploy to its own Vercel project `swl-site-staff`.
 
-First, run the development server:
+## Stack
+
+- Next.js 15 (App Router, React Compiler enabled)
+- TypeScript + Tailwind CSS v4
+- Framer Motion for UI motion states
+- Supabase (Postgres 15+) with Service Role access
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env.local
+# fill in Supabase keys + site mode flag
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Navigate to `http://localhost:3000/gate` to log in with a staff email/password stored in the `staff_access` table. Successful auth sets the `swl_staff` cookie and unlocks `/` and `/staff/*` routes via the Next.js proxy guard (`src/proxy.ts`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Name | Description |
+| --- | --- |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service Role API key used by the gate API route |
+| `NEXT_PUBLIC_SITE_MODE` | Static flag used for telemetry/analytics (defaults to `staff`) |
 
-## Learn More
+## Supabase schema
 
-To learn more about Next.js, take a look at the following resources:
+```sql
+create extension if not exists pgcrypto;
+create table if not exists staff_access (
+  id uuid primary key default uuid_generate_v4(),
+  email text unique not null,
+  password_hash text not null,
+  must_reset boolean default false,
+  role text default 'staff',
+  created_at timestamptz default now()
+);
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+insert into staff_access (email, password_hash, role)
+values
+  ('tom@openpeople.ai', crypt('opendeck', gen_salt('bf'))),
+  ('ken@snowwhitelaundry.co', crypt('chefpass', gen_salt('bf')))
+on conflict (email) do nothing;
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Key directories
 
-## Deploy on Vercel
+```
+src/app/
+├── page.tsx            # Staff dashboard launcher
+├── gate/page.tsx       # Auth gate
+├── api/gate/route.ts   # Supabase-backed login endpoint
+└── staff/              # Module surfaces (schedule, menu, inventory, reflection)
+src/proxy.ts            # Cookie guard for / and /staff/*
+src/components/staff/   # Shared Cortex UI components
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Initialize a new git repository and push to `openpeople/swl-site-staff`.
+2. `vercel link` → select `swl-site-staff`.
+3. Configure the three environment variables above in Vercel (production + preview).
+4. `vercel --prod` to ship the dashboard.
+
+The production domain should remain `ai.snowwhitelaundry.co`. Ensure the Supabase service role key is treated as sensitive and never exposed to the browser—only the `/api/gate` route uses it server-side.
+# swl-site-dev
