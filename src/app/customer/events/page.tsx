@@ -5,6 +5,8 @@ import {
   CustomerEventWizard,
   type WizardActionState,
 } from "@/apps/customer/components/CustomerEventWizard";
+import { ReserveOpeningWeekForm } from "@/apps/customer/components/ReserveOpeningWeekForm";
+import type { ReserveFormState } from "@/apps/customer/types";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { listEventsForGuest } from "@/apps/events/lib/queries";
 import { getSessionFromCookies } from "@/lib/session";
@@ -30,6 +32,7 @@ export default async function CustomerEventsPage() {
   const events = await listEventsForGuest(session.email);
 
   const initialActionState: WizardActionState = { status: "idle" };
+  const reserveInitialState: ReserveFormState = { status: "idle" };
 
   async function handleCreate(
     _prevState: WizardActionState,
@@ -119,11 +122,13 @@ export default async function CustomerEventsPage() {
       <section className="rounded-3xl border border-white/10 bg-white/5 p-6 text-white shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
         <h2 className="text-2xl font-light">Reserve Opening Week</h2>
         <p className="mt-2 text-sm text-white/70">
-          We’ll email you first when the dining room opens to the public. Tell
-          us your preferred evening and party size and we’ll confirm a table as
-          soon as reservations go live.
+          We’ll email you before reservations open to the public. Choose a launch
+          night, dial in your party size, and add any celebration notes.
         </p>
-        <EarlyReservationForm email={session.email} />
+        <ReserveOpeningWeekForm
+          action={createEarlyReservation}
+          initialState={reserveInitialState}
+        />
       </section>
 
       <section className="space-y-4">
@@ -342,100 +347,38 @@ async function notifyEventTeam(
   }
 }
 
-async function createEarlyReservation(formData: FormData, email: string) {
+async function createEarlyReservation(
+  _prev: ReserveFormState,
+  formData: FormData,
+): Promise<ReserveFormState> {
   "use server";
-  const supabase = getSupabaseAdmin();
-  const payload = {
-    email,
-    preferred_date: formData.get("opening_date")?.toString() ?? null,
-    party_size: Number(formData.get("opening_party")) || null,
-    notes: formData.get("opening_notes")?.toString() ?? null,
-  };
-  const { error } = await supabase.from("opening_reservations").insert(payload);
-  if (error) throw error;
-}
-
-function EarlyReservationForm({ email }: { email: string }) {
-  const OPENING_DATES = [
-    { label: "Thu · Apr 24", value: "2026-04-24" },
-    { label: "Fri · Apr 25", value: "2026-04-25" },
-    { label: "Sat · Apr 26", value: "2026-04-26" },
-  ];
-  const PARTY_SIZES = ["2", "4", "6", "8", "10+"];
-
-  return (
-    <form
-      action={async (formData) => {
-        "use server";
-        await createEarlyReservation(formData, email);
-        revalidatePath("/customer/events");
-      }}
-      className="mt-6 space-y-6"
-    >
-      <fieldset>
-        <legend className="text-sm uppercase tracking-[0.3em] text-white/50">
-          Opening nights
-        </legend>
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {OPENING_DATES.map((slot) => (
-            <label
-              key={slot.value}
-              className="flex-1 min-w-[140px] cursor-pointer rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-center text-sm text-white/80 transition hover:border-white/50"
-            >
-              <input
-                type="radio"
-                name="opening_date"
-                value={slot.value}
-                defaultChecked={slot.value === OPENING_DATES[0].value}
-                className="sr-only"
-              />
-              {slot.label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend className="text-sm uppercase tracking-[0.3em] text-white/50">
-          Party size
-        </legend>
-        <div className="mt-3 flex flex-wrap gap-3">
-          {PARTY_SIZES.map((size) => (
-            <label
-              key={size}
-              className="flex-1 min-w-[90px] cursor-pointer rounded-full border border-white/15 bg-white/5 px-4 py-2 text-center text-sm text-white/80 transition hover:border-white/50"
-            >
-              <input
-                type="radio"
-                name="opening_party"
-                value={size}
-                defaultChecked={size === "4"}
-                className="sr-only"
-              />
-              {size} guests
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <label className="block text-sm text-white/70">
-        Notes (allergies, occasion, seating requests)
-        <textarea
-          name="opening_notes"
-          rows={3}
-          placeholder="e.g. Anniversary dinner, shellfish allergy, prefer counter."
-          className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-[#2A63FF]"
-        />
-      </label>
-
-      <div>
-        <button
-          type="submit"
-          className="w-full rounded-2xl border border-white/20 px-4 py-3 text-sm uppercase tracking-[0.3em] text-white transition hover:border-white/60"
-        >
-          Request Early Seating
-        </button>
-      </div>
-    </form>
-  );
+  try {
+    const session = await getSessionFromCookies();
+    if (!session) {
+      redirect("/gate?next=/customer/events");
+    }
+    const supabase = getSupabaseAdmin();
+    const payload = {
+      email: session.email,
+      preferred_date: formData.get("opening_date")?.toString() ?? null,
+      party_size: Number(formData.get("opening_party")) || null,
+      notes: formData.get("opening_notes")?.toString() ?? null,
+    };
+    const { error } = await supabase
+      .from("opening_reservations")
+      .insert(payload);
+    if (error) throw error;
+    revalidatePath("/customer/events");
+    return {
+      status: "success",
+      message: "You’re on the opening list. We’ll confirm once tables open.",
+    };
+  } catch (error) {
+    console.error("Early reservation failed", error);
+    return {
+      status: "error",
+      message:
+        (error as Error).message ?? "Unable to save request. Please try again.",
+    };
+  }
 }
