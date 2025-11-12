@@ -7,6 +7,8 @@ import {
   type SessionPayload,
 } from "@/lib/session";
 
+const COOKIE_DOMAIN = process.env.AUTH_COOKIE_DOMAIN;
+
 type StaffAccessRecord = {
   password_hash: string;
   role?: string | null;
@@ -23,10 +25,7 @@ function buildAuthCookieResponse(payload: SessionPayload) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     path: "/",
-    domain:
-      process.env.NODE_ENV === "production"
-        ? "ai.snowwhitelaundry.co"
-        : undefined,
+    domain: COOKIE_DOMAIN || undefined,
     maxAge: 60 * 60 * 6,
   });
   return response;
