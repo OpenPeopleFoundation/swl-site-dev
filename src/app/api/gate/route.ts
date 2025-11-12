@@ -1,17 +1,24 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getSupabaseAdmin } from "@/lib/supabase";
-
-const STAFF_COOKIE = "swl_staff";
+import {
+  SESSION_COOKIE,
+  serializeSession,
+  type SessionPayload,
+} from "@/lib/session";
 
 type StaffAccessRecord = {
   password_hash: string;
   role?: string | null;
 };
 
-function buildAuthCookieResponse() {
-  const response = NextResponse.json({ success: true });
-  response.cookies.set(STAFF_COOKIE, "granted", {
+function buildAuthCookieResponse(payload: SessionPayload) {
+  const response = NextResponse.json({
+    success: true,
+    role: payload.role,
+    email: payload.email,
+  });
+  response.cookies.set(SESSION_COOKIE, serializeSession(payload), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
@@ -108,7 +115,7 @@ export async function POST(request: Request) {
           { status: 500 },
         );
       }
-      return buildAuthCookieResponse();
+      return buildAuthCookieResponse({ email, role: "customer" });
     }
 
     if (!data || !password) {
@@ -127,7 +134,10 @@ export async function POST(request: Request) {
       );
     }
 
-    return buildAuthCookieResponse();
+    return buildAuthCookieResponse({
+      email,
+      role: data.role ?? "staff",
+    });
   } catch (err) {
     console.error("Gate error", err);
     return NextResponse.json({ error: "Access denied" }, { status: 401 });

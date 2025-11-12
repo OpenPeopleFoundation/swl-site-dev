@@ -1,10 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 type GateMode = "unknown" | "existing" | "new";
 
-export default function Gate() {
+export default function GatePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-black text-white">
+          <p className="text-white/60">Opening gate…</p>
+        </main>
+      }
+    >
+      <Gate />
+    </Suspense>
+  );
+}
+
+function Gate() {
+  const searchParams = useSearchParams();
+  const nextPath = useMemo(
+    () => searchParams.get("next") ?? "",
+    [searchParams],
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -99,7 +119,10 @@ export default function Gate() {
       if (!res.ok) {
         throw new Error(data.error ?? "Access denied");
       }
-      window.location.href = "/staff";
+      const destination =
+        nextPath ||
+        (data.role === "customer" ? "/customer" : "/staff");
+      window.location.href = destination;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Access denied");
     } finally {

@@ -68,3 +68,18 @@ export async function listCompletedEvents() {
   }
   return (data ?? []) as PrivateEvent[];
 }
+
+export async function listEventsForGuest(email: string) {
+  const supabase = getAdminClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("private_events")
+    .select(baseColumns)
+    .eq("guest_email", email)
+    .order("preferred_date", { ascending: true });
+  if (error) {
+    console.error("listEventsForGuest error", error);
+    return [];
+  }
+  return (data ?? []) as PrivateEvent[];
+}
