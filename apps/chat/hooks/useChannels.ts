@@ -9,6 +9,22 @@ export type ChatChannel = {
   type: string;
 };
 
+type ChannelMemberRow = {
+  channel_id: string;
+  channels:
+    | null
+    | {
+        id: string;
+        name?: string | null;
+        type?: string | null;
+      }
+    | Array<{
+        id: string;
+        name?: string | null;
+        type?: string | null;
+      }>;
+};
+
 export function useChannels(userId?: string | null) {
   const supabase = supabaseBrowser;
   const [channels, setChannels] = useState<ChatChannel[]>([]);
@@ -35,7 +51,7 @@ export function useChannels(userId?: string | null) {
     }
 
     const map = new Map<string, ChatChannel>();
-    (data ?? []).forEach((row: any) => {
+    (data ?? []).forEach((row: ChannelMemberRow) => {
       const channelData = Array.isArray(row.channels)
         ? row.channels[0]
         : row.channels;

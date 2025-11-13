@@ -1,0 +1,26 @@
+name: Codex Orchestrator
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  codex:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Overseer
+        run: |
+          node codex/orchestrator/oversee.js
+
+      - name: Upload Patch Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: codex-merged-patch
+          path: codex/overseer/output

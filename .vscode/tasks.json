@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Codex: Send Task",
+      "type": "shell",
+      "command": "echo \"$USER_TASK\" > codex/inbox/task_$(date +%s).txt",
+      "problemMatcher": [],
+      "options": { "env": { "USER_TASK": "${input:userTask}" } }
+    },
+    {
+      "label": "Codex: Dispatch",
+      "type": "shell",
+      "command": "node codex/orchestrator/dispatch.js"
+    },
+    {
+      "label": "Codex: Oversee",
+      "type": "shell",
+      "command": "node codex/orchestrator/oversee.js"
+    },
+    {
+      "label": "Codex: Full Cycle",
+      "dependsOn": [
+        "Codex: Send Task",
+        "Codex: Dispatch",
+        "Codex: Oversee"
+      ],
+      "dependsOrder": "sequence"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "userTask",
+      "type": "promptString",
+      "description": "Task for Codex"
+    }
+  ]
+}

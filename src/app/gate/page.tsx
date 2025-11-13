@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabaseClient";
+import { supabaseBrowser } from "@/lib/supabaseBrowser";
 import toast from "react-hot-toast";
 
 type Mode = "email" | "password";
 
 export function LoginPanel() {
+  const supabase = supabaseBrowser;
   const [mode, setMode] = useState<Mode>("email");
   const [email, setEmail] = useState("");
   const [userExists, setUserExists] = useState<boolean | null>(null);
@@ -35,9 +36,10 @@ export function LoginPanel() {
       const { exists } = await res.json();
       setUserExists(exists);
       setMode("password"); // move to password stage and STAY there
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("check-user error:", err);
-      toast.error(err?.message ?? "Unable to verify account.");
+      const message = err instanceof Error ? err.message : "Unable to verify account.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -69,9 +71,10 @@ export function LoginPanel() {
         if (error) throw error;
         toast.success("Check your email to confirm.");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("auth error:", err);
-      toast.error(err?.message ?? "Authentication failed.");
+      const message = err instanceof Error ? err.message : "Authentication failed.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
