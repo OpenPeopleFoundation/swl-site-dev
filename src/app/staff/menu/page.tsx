@@ -161,15 +161,33 @@ const workspaceState: ComponentProps<typeof MenuBuilderWorkspace> = {
 
 export default function StaffMenuPage() {
   return (
-    <div className="flex w-full flex-col gap-6">
-      <div className="rounded-[32px] border border-white/10 bg-white/5 p-6 text-white shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
-        <p className="text-xs uppercase tracking-[0.45em] text-white/50">Staff · Menu Builder</p>
-        <h1 className="mt-2 text-3xl font-light tracking-[0.25em]">Live Development Queue</h1>
-        <p className="mt-1 text-sm text-white/60">
-          Linked to Supabase drafts, plating guides, and prep engine. Switch dishes to push updates
-          to the guest concierge once approved.
-        </p>
-      </div>
+    <div className="flex w-full flex-col gap-6 text-white">
+      <section className="rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.45)]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.45em] text-white/50">Staff · Menu Builder</p>
+            <h1 className="mt-2 text-3xl font-light tracking-[0.25em]">Live Development Queue</h1>
+            <p className="mt-1 text-sm text-white/60">
+              Calm snapshot of active dishes, prep load, and allergen flags.
+            </p>
+          </div>
+          <div className="flex gap-2 text-xs uppercase tracking-[0.35em] text-white/60">
+            <span className="rounded-full border border-white/20 px-3 py-1">Drafts · 3</span>
+            <span className="rounded-full border border-white/20 px-3 py-1">Alerts · 2</span>
+          </div>
+        </div>
+      </section>
+      <section className="rounded-[28px] border border-white/10 bg-black/30 p-4">
+        <div className="grid gap-4 md:grid-cols-3">
+          {workspaceState.costMetrics.map((metric) => (
+            <div key={metric.label} className="rounded-2xl border border-white/15 bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-[0.4em] text-white/50">{metric.label}</p>
+              <p className="mt-2 text-2xl font-light">{metric.value}</p>
+              <p className="text-xs text-white/60">Trend · {metric.trend}</p>
+            </div>
+          ))}
+        </div>
+      </section>
       <MenuBuilderWorkspace {...workspaceState} />
     </div>
   );

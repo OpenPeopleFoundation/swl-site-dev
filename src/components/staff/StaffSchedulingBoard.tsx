@@ -177,6 +177,12 @@ const REQUEST_COPY: Record<RequestType, { label: string; placeholder: string }> 
   },
 };
 
+const GLANCE_METRICS = [
+  { id: "guests", label: "Guests", value: "46 tonight", detail: "18 seated · 28 incoming" },
+  { id: "stations", label: "Stations", value: "4 live", detail: "Line, pastry, bar, host" },
+  { id: "tasks", label: "Open cues", value: "4", detail: "Menu edits + ops pings" },
+];
+
 export function StaffSchedulingBoard() {
   const [selectedReservationId, setSelectedReservationId] = useState(
     RESERVATION_DECK[0]?.id ?? null,
@@ -230,9 +236,10 @@ export function StaffSchedulingBoard() {
         </div>
       </header>
 
-      <ViewOnlyBanner />
+  <ViewOnlyBanner />
+  <SummaryPanel metrics={GLANCE_METRICS} />
 
-      <div className="grid gap-6 xl:grid-cols-[3fr_minmax(320px,1fr)]">
+  <div className="grid gap-6 xl:grid-cols-[3fr_minmax(320px,1fr)]">
         <div className="space-y-6">
           <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
             <h2 className="text-xs uppercase tracking-[0.5em] text-white/50">Crew Timeline</h2>
@@ -246,17 +253,17 @@ export function StaffSchedulingBoard() {
                     {column.items.map((item) => (
                       <article
                         key={item.id}
-                        className="rounded-2xl border border-white/15 bg-white/5 p-4 shadow-[0_15px_40px_rgba(0,0,0,0.35)]"
+                        className="rounded-2xl border border-white/15 bg-white/5 p-4 shadow-[0_15px_30px_rgba(0,0,0,0.25)]"
                       >
-                        <div className="flex items-center justify-between gap-2 text-xs uppercase tracking-[0.35em] text-white/50">
+                        <div className="flex items-center justify-between gap-2 text-xs uppercase tracking-[0.4em] text-white/45">
                           <span>{item.time}</span>
                           <span className={`rounded-full px-2 py-0.5 text-[10px] ${FOCUS_COPY[item.focus].color}`}>
                             {FOCUS_COPY[item.focus].label}
                           </span>
                         </div>
-                        <p className="mt-2 text-base font-light text-white">{item.title}</p>
-                        <p className="text-sm text-white/70">{item.meta}</p>
-                        <p className="mt-2 text-xs text-white/60">{item.detail}</p>
+                        <p className="mt-2 text-lg font-light text-white">{item.title}</p>
+                        <p className="text-sm text-white/65">{item.meta}</p>
+                        <p className="mt-1 text-xs text-white/50">{item.detail}</p>
                         <button
                           type="button"
                           onClick={() => prefillRequest("shift_change", `${item.title} · ${item.time}`)}
@@ -519,3 +526,23 @@ function FocusChip({
 }
 
 export default StaffSchedulingBoard;
+
+function SummaryPanel({
+  metrics,
+}: {
+  metrics: Array<{ id: string; label: string; value: string; detail: string }>;
+}) {
+  return (
+    <section className="rounded-[32px] border border-white/10 bg-white/5 p-4 text-white">
+      <div className="grid gap-4 md:grid-cols-3">
+        {metrics.map((metric) => (
+          <div key={metric.id} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p className="text-xs uppercase tracking-[0.4em] text-white/50">{metric.label}</p>
+            <p className="mt-2 text-2xl font-light">{metric.value}</p>
+            <p className="text-xs text-white/60">{metric.detail}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}

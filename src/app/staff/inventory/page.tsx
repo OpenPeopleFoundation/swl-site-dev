@@ -128,10 +128,27 @@ const storageMetrics = [
   },
 ];
 
+const summaryTiles = [
+  { id: "alerts", label: "Active alerts", value: "2", detail: "Langoustine · Spruce" },
+  { id: "automation", label: "Automation", value: "Auto replenish", detail: "Waste telemetry normal" },
+  { id: "sync", label: "Last sync", value: "14:32", detail: "Supabase functions" },
+];
+
 export default function InventoryPage() {
   return (
     <div className="flex w-full flex-col gap-6 text-white">
       <InventoryTopBar title="InventoryOS" timestamp="Synced 14:32" alerts={alertChips} />
+      <section className="rounded-[28px] border border-white/10 bg-white/5 p-4">
+        <div className="grid gap-4 md:grid-cols-3">
+          {summaryTiles.map((tile) => (
+            <div key={tile.id} className="rounded-2xl border border-white/10 bg-black/25 p-4">
+              <p className="text-xs uppercase tracking-[0.4em] text-white/50">{tile.label}</p>
+              <p className="mt-2 text-2xl font-light">{tile.value}</p>
+              <p className="text-xs text-white/60">{tile.detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
       <div className="flex flex-col gap-6 xl:flex-row">
         <InventorySidebar sections={sidebarSections} footerText="Auto-syncs every hour via Supabase functions." />
         <div className="flex-1 space-y-6">
