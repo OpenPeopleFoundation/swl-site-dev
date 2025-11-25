@@ -1,0 +1,77 @@
+
+
+/Users/mars/Code/swl-site-dev/scripts/cleanup-worktrees.js
+  15:12  error    A `require()` style import is forbidden  @typescript-eslint/no-require-impor
+  15:12  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  16:14  error    A `require()` style import is forbidden  @typescript-eslint/no-require-impor
+  16:14  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  17:22  error    A `require()` style import is forbidden  @typescript-eslint/no-require-impor
+  17:22  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  54:12  warning  'err' is defined but never used          @typescript-eslint/no-unused-vars
+
+/Users/mars/Code/swl-site-dev/scripts/generate-breadcrumbs.mjs
+  23:7  warning  'template' is assigned a value but never used  @typescript-eslint/no-unused-v
+  23:7  warning  'template' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/mars/Code/swl-site-dev/src/app/api/monitoring/validation/route.ts
+  11:7  warning  'BASE_URL' is assigned a value but never used  @typescript-eslint/no-unused-v
+  11:7  warning  'BASE_URL' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/mars/Code/swl-site-dev/src/app/api/updates/generate/route.ts
+  14:7  warning  'BASE_URL' is assigned a value but never used  @typescript-eslint/no-unused-v
+  14:7  warning  'BASE_URL' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  87:9  warning  'dateStr' is assigned a value but never used   @typescript-eslint/no-unused-v
+  87:9  warning  'dateStr' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+/Users/mars/Code/swl-site-dev/src/apps/owner-console/src/domains/customer/components/CustomerA
+/Users/mars/Code/swl-site-dev/src/apps/owner-console/src/domains/customer/components/CustomerAiHandbook.tsx
+   27:58  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/ru
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/mars/Code/swl-site-dev/src/apps/owner-console/src/domains/customer/components/CustomerA
+/Users/mars/Code/swl-site-dev/src/apps/owner-console/src/domains/customer/components/CustomerAiHandbook.tsx:27:58
+  25 |     events.find((event) => {
+  26 |       if (!event.preferred_date) return false;
+> 27 |       return new Date(event.preferred_date).getTime() >= Date.now();
+     |                                                          ^^^^^^^^^^ Cannot call impure 
+     |                                                          ^^^^^^^^^^ Cannot call impure function
+  28 |     }) ?? events[0];
+  29 |
+  30 |   const confirmedCount = events.filter((event) =>  react-hooks/purity
+  148:17  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`              
+  148:17  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                            
+  148:17  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                          
+  148:17  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                        
+  148:17  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                      
+  148:17  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+  148:17  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+  148:17  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+  148:17  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react/no-unescaped-entities
+
+/Users/mars/Code/swl-site-dev/src/domains/customer/components/CustomerAiHandbook.tsx
+  25:29  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/ru
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/mars/Code/swl-site-dev/src/domains/customer/components/CustomerAiHandbook.tsx:25:29
+  23 | export function CustomerAiHandbook({ guestEmail, events }: HandbookProps) {
+  24 |   const hasEvents = events.length > 0;
+> 25 |   const now = useMemo(() => Date.now(), []);
+     |                             ^^^^^^^^^^ Cannot call impure function
+  26 |   const nextEvent =
+  27 |     events.find((event) => {
+  28 |       if (!event.preferred_date) return false;  react-hooks/purity
+
+/Users/mars/Code/swl-site-dev/src/lib/staff/posServer.ts
+  263:3  warning  '_session' is defined but never used  @typescript-eslint/no-unused-vars
+  307:3  warning  '_session' is defined but never used  @typescript-eslint/no-unused-vars
+  343:3  warning  '_session' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 14 problems (6 errors, 8 warnings)
+
+ ELIFECYCLE  Command failed with exit 

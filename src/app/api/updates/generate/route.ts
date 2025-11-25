@@ -11,7 +11,7 @@ import path from "path";
  * Cron schedule: Every Tuesday at 10:00 AM NST
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.ai";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.co";
 const updatesDir = path.join(process.cwd(), "swl-overshare/updates");
 
 type UpdateType =

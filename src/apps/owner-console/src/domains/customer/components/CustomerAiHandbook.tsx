@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import type { PrivateEvent } from "@/domains/events/lib/queries";
 
 type HandbookProps = {
@@ -21,11 +22,15 @@ function formatDateLabel(value?: string | null) {
 
 export function CustomerAiHandbook({ guestEmail, events }: HandbookProps) {
   const hasEvents = events.length > 0;
+  // eslint-disable-next-line react-hooks/purity -- useRef initializer is called once per component instance, Date.now() is needed for date comparison
+  const nowRef = useRef(Date.now());
+  const now = nowRef.current;
+
   const nextEvent =
     events.find((event) => {
       if (!event.preferred_date) return false;
-      return new Date(event.preferred_date).getTime() >= Date.now();
-    }) ?? events[0];
+      return new Date(event.preferred_date).getTime() >= now;
+    }) ?? (events.length > 0 ? events[events.length - 1] : undefined);
 
   const confirmedCount = events.filter((event) =>
     ["contract_signed", "deposit_paid", "confirmed", "completed"].includes(
@@ -145,7 +150,7 @@ export function CustomerAiHandbook({ guestEmail, events }: HandbookProps) {
           {nextEvent?.preferred_date && (
             <p className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
               Next target window: <span className="text-white">{formatDateLabel(nextEvent.preferred_date)}</span>.
-              We'll nudge you if anything shifts.
+              We&apos;ll nudge you if anything shifts.
             </p>
           )}
         </article>

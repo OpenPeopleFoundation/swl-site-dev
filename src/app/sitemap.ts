@@ -13,7 +13,7 @@ import type { MetadataRoute } from "next";
  * Auto-regenerates on every deployment.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.ai";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.co";
 
 type BreadcrumbFile = {
   slug: string;

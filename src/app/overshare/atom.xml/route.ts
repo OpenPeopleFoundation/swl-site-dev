@@ -8,7 +8,7 @@ import path from "path";
  * and provides richer metadata support.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.ai";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.co";
 
 type BreadcrumbMeta = {
   slug: string;

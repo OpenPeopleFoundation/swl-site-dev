@@ -8,7 +8,7 @@ import path from "path";
  * Provides structured data in easily parseable format.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.ai";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.co";
 
 type BreadcrumbItem = {
   id: string;

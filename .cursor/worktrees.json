@@ -3,6 +3,6 @@
     "npm install"
   ],
     "scripts": {
-    "clean-worktrees": "node scripts/cleanup-worktrees.js"
+    "clean-worktrees": "node scripts/cleanup-worktrees.mjs"
   }
 }

@@ -13,7 +13,7 @@ import { NextResponse } from "next/server";
  * - Power "discover" features in UIs
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.ai";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.co";
 
 type BreadcrumbResponse = {
   slug: string;

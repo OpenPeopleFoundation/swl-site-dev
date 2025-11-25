@@ -12,7 +12,7 @@ import path from "path";
  * - Long-term semantic trend graphs
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.ai";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://snowwhitelaundry.co";
 
 type BreadcrumbMeta = {
   slug: string;

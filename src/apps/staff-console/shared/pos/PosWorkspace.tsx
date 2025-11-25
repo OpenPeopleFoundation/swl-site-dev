@@ -11,6 +11,8 @@ import type {
   TableBlock,
 } from "@/types/pos";
 
+const QUICK_ACTIONS = ["Fire", "Pay", "Void", "Split"] as const;
+
 export function PosWorkspace() {
   const {
     loading,
@@ -123,6 +125,7 @@ export function PosWorkspace() {
       qty: 1,
           menuItemId: item.id,
       modifierKey: item.modifierKey,
+      modifiers: [],
         });
       } catch (err) {
         console.error(err);
