@@ -5,6 +5,7 @@ import type {
   PosTicket,
   PosTicketLine,
   TableDefinition,
+  TableZone,
 } from "@/types/pos";
 
 type TableRow = {
@@ -54,15 +55,21 @@ export function mapTableDefinitions(
 ): TableDefinition[] {
   const zoneById = new Map(zones.map((zone) => [zone.id, zone.slug]));
   return tables
-    .map<TableDefinition>((table) => ({
-      dbId: table.id,
-      id: table.slug,
-      label: table.label,
-      seats: table.seat_count,
-      zone: zoneById.get(table.zone_id ?? "") ?? "dining",
-      canCombine: table.can_combine,
-      sortOrder: table.sort_order ?? 0,
-    }))
+    .map<TableDefinition>((table) => {
+      const zoneSlug = zoneById.get(table.zone_id ?? "");
+      const zone: TableZone = (zoneSlug === "chef" || zoneSlug === "bar" || zoneSlug === "dining")
+        ? zoneSlug
+        : "dining";
+      return {
+        dbId: table.id,
+        id: table.slug,
+        label: table.label,
+        seats: table.seat_count,
+        zone,
+        canCombine: table.can_combine,
+        sortOrder: table.sort_order ?? 0,
+      };
+    })
     .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
 }
 
@@ -76,8 +83,8 @@ export function mapMenu(
         id: item.id,
         name: item.name,
         price: Number(item.price),
-        tags: item.tags,
-        modifierKey: item.modifier_key,
+        tags: item.tags ?? undefined,
+        modifierKey: item.modifier_key ?? undefined,
       };
       acc[item.category_id] = [...(acc[item.category_id] ?? []), next];
       return acc;

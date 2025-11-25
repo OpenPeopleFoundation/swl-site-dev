@@ -1,5 +1,3 @@
-"use server";
-
 import { createPosStore } from "@/lib/staff/posStoreCore";
 import type { SessionPayload } from "@/lib/shared/session";
 

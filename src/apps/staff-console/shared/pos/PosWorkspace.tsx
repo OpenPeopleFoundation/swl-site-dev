@@ -13,6 +13,12 @@ import type {
 
 const QUICK_ACTIONS = ["Fire", "Pay", "Void", "Split"] as const;
 
+type SeatSlot = {
+  id: string;
+  label: string;
+  blockId: string;
+};
+
 export function PosWorkspace() {
   const {
     loading,

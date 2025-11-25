@@ -101,3 +101,47 @@ export type UpdateCheckPayload = {
   expectedRevision?: number;
 };
 
+// Legacy types for compatibility with older POS code
+export type TableDefinition = {
+  dbId: string;
+  id: string;
+  label: string;
+  seats: number;
+  zone: TableZone;
+  canCombine: boolean;
+  sortOrder: number;
+};
+
+export type PosTicket = {
+  id: string;
+  tableIds: string[];
+  tableSlugs: string[];
+  seatMap: string[];
+  guestNames: string[];
+  status: string;
+  currentCourse: string | null;
+  receiptNote: string | null;
+  lastFireAt: string | null;
+  seatedAt: string | null;
+  revision: number;
+  updatedAt: string | null;
+};
+
+export type PosTicketLine = {
+  id: string;
+  ticketId: string;
+  menuItemId: string | null;
+  name: string;
+  seat: string;
+  price: number;
+  qty: number;
+  modifierKey: string | null;
+  modifiers: string[];
+  comp: boolean;
+  splitMode: "none" | "even" | "custom";
+  transferTo: string | null;
+  customSplitNote: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+};
+

@@ -59,9 +59,13 @@ export function deriveTableBlocks(
     const summary = summarizeLines(lines);
 
     return {
-      ...definition,
+      id: definition.id,
+      label: definition.label,
+      seats: definition.seats,
+      zone: definition.zone,
+      canCombine: definition.canCombine,
       status: ticket ? STATUS_MAP[ticket.status] ?? "ordering" : "open",
-      currentCourse: ticket?.currentCourse,
+      currentCourse: ticket?.currentCourse ?? undefined,
       lastOrderMinutes: ticket ? minutesSince(ticket.lastFireAt ?? ticket.updatedAt) : undefined,
       seatedMinutes: ticket ? minutesSince(ticket.seatedAt) : undefined,
       guestNames: ticket?.guestNames ?? [],
