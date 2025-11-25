@@ -4,7 +4,7 @@
 
 ```bash
 # Set your domain
-export NEXT_PUBLIC_SITE_URL=https://your-domain.com
+export NEXT_PUBLIC_SITE_URL=https://snowwhitelaundry.co
 
 # Run post-deployment verification
 ./scripts/post-deployment.sh
@@ -135,7 +135,7 @@ After running all steps, verify:
 
 ```bash
 # Set your domain
-DOMAIN="https://your-domain.com"
+DOMAIN="https://snowwhitelaundry.co"
 
 # Test RSS feed
 curl -I "$DOMAIN/overshare/feed.xml"

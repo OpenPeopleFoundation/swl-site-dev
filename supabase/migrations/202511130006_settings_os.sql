@@ -1,4 +1,4 @@
-create extension if not exists pgcrypto;
+-- Note: pgcrypto already exists in extensions schema on Supabase
 
 create table if not exists public.user_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,

@@ -7,7 +7,7 @@ echo ""
 # Check if domain is set
 if [ -z "$NEXT_PUBLIC_SITE_URL" ]; then
     echo "⚠️  NEXT_PUBLIC_SITE_URL not set"
-    echo "Set it with: export NEXT_PUBLIC_SITE_URL=https://your-domain.com"
+    echo "Set it with: export NEXT_PUBLIC_SITE_URL=https://snowwhitelaundry.co"
     echo ""
     read -p "Enter your domain (or press Enter to use default): " DOMAIN
     if [ -z "$DOMAIN" ]; then

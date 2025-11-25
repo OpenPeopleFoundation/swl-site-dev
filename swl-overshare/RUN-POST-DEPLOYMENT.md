@@ -9,7 +9,7 @@ Run the automated verification:
 ./scripts/run-post-deployment.sh
 
 # Option 2: Set domain and run directly
-export NEXT_PUBLIC_SITE_URL=https://your-domain.com
+export NEXT_PUBLIC_SITE_URL=https://snowwhitelaundry.co
 ./scripts/post-deployment.sh
 ```
 
@@ -79,7 +79,7 @@ If the script shows errors because the site isn't deployed:
 
 2. **Then Run Post-Deployment:**
    ```bash
-   export NEXT_PUBLIC_SITE_URL=https://your-deployed-domain.com
+   export NEXT_PUBLIC_SITE_URL=https://snowwhitelaundry.co
    ./scripts/post-deployment.sh
    ```
 

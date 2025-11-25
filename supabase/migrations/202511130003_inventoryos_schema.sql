@@ -1,7 +1,6 @@
 -- InventoryOS schema: food, alcohol, and shared inventory intelligence tables
 -- Deterministic, additive migration
-
-create extension if not exists pgcrypto;
+-- Note: pgcrypto already exists in extensions schema on Supabase
 
 -- Shared vendors ------------------------------------------------------------
 

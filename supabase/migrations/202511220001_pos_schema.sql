@@ -58,7 +58,7 @@ create table if not exists public.pos_tables (
 create table if not exists public.pos_sessions (
   id uuid primary key default gen_random_uuid(),
   table_id uuid references public.pos_tables(id) on delete set null,
-  reservation_id integer references public.reservations(id) on delete set null,
+  reservation_id integer, -- FK to reservations added later when reservations table exists
   started_by uuid references public.staff(id) on delete set null,
   status text not null default 'open',
   party_size integer,
