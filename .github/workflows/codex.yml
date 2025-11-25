@@ -25,5 +25,4 @@ jobs:
           name: codex-merged-patch
           path: codex/overseer/output
 
-fetch.prune=true
 
