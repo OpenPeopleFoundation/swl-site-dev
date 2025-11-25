@@ -1,0 +1,23 @@
+name: Clean Worktrees
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # every morning UTC
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm install
+
+      - name: Clean worktrees
+        run: npm run clean-worktrees

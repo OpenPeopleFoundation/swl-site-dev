@@ -1,0 +1,33 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Snow White Laundry",
+  "alternateName": "SWL",
+  "url": "https://snowwhitelaundry.co",
+  "logo": "https://snowwhitelaundry.co/logo.png",
+  "description": "A restaurant in St. John's, Newfoundland, where intention, emotion, and craft are treated as primary ingredients.",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "St. John's",
+    "addressRegion": "Newfoundland and Labrador",
+    "addressCountry": "CA"
+  },
+  "sameAs": [
+    "https://www.instagram.com/snowwhitelaundry",
+    "https://www.facebook.com/snowwhitelaundry"
+  ],
+  "foundingDate": "2026-05",
+  "founder": {
+    "@type": "Person",
+    "name": "Tom"
+  },
+  "keywords": [
+    "fine dining",
+    "newfoundland restaurant",
+    "st. john's dining",
+    "chef-driven",
+    "intention emotion craft",
+    "tasting menu",
+    "hospitality philosophy"
+  ]
+}

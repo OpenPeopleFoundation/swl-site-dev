@@ -13,6 +13,7 @@ const navItems = [
   { label: "Events", href: "/staff/events" },
   { label: "Inventory", href: "/staff/inventory" },
   { label: "Reflection", href: "/staff/reflection" },
+  { label: "Breadcrumbs", href: "/staff/breadcrumbs" },
   { label: "Settings", href: "/staff/settings" },
 ];
 

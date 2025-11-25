@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "description": "Index of all Snow White Laundry breadcrumb files for Overshare Engine.",
+  "auto_generate_rules": {
+    "detect_missing_categories": true,
+    "detect_conceptual_clusters": true,
+    "propose_new_breadcrumbs": true,
+    "require_template_compliance": true
+  },
+  "breadcrumbs": [
+    "breadcrumb-swl-acoustics.md",
+    "breadcrumb-swl-craft.md",
+    "breadcrumb-swl-cuisine-philosophy.md",
+    "breadcrumb-swl-documentation-systems.md",
+    "breadcrumb-swl-emotion.md",
+    "breadcrumb-swl-flavor-balance.md",
+    "breadcrumb-swl-guest-communication.md",
+    "breadcrumb-swl-guest-experience.md",
+    "breadcrumb-swl-hospitality-ethics.md",
+    "breadcrumb-swl-ingredient-sourcing.md",
+    "breadcrumb-swl-intention.md",
+    "breadcrumb-swl-lighting-design.md",
+    "breadcrumb-swl-menu-design.md",
+    "breadcrumb-swl-mission.md",
+    "breadcrumb-swl-music-curation.md",
+    "breadcrumb-swl-newfoundland-context.md",
+    "breadcrumb-swl-ops-rhythm.md",
+    "breadcrumb-swl-origin-story.md",
+    "breadcrumb-swl-pre-service-prep.md",
+    "breadcrumb-swl-preservation-techniques.md",
+    "breadcrumb-swl-reflection-practices.md",
+    "breadcrumb-swl-restraint.md",
+    "breadcrumb-swl-ritual-development.md",
+    "breadcrumb-swl-seasonal-cooking.md",
+    "breadcrumb-swl-service-philosophy.md",
+    "breadcrumb-swl-space-design.md",
+    "breadcrumb-swl-staff-culture.md",
+    "breadcrumb-swl-training-philosophy.md"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "{{TITLE}}",
+  "description": "{{SUMMARY}}",
+  "author": {
+    "@type": "Organization",
+    "name": "Snow White Laundry"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Snow White Laundry",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://snowwhitelaundry.co/logo.png"
+    }
+  },
+  "datePublished": "{{CREATED_AT}}",
+  "dateModified": "{{MODIFIED_AT}}",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://snowwhitelaundry.co/breadcrumbs/{{SLUG}}"
+  },
+  "keywords": "{{KEYWORDS}}",
+  "about": {
+    "@type": "Thing",
+    "name": "{{CATEGORY}}",
+    "description": "{{CATEGORY_DESCRIPTION}}"
+  },
+  "mentions": [
+    {
+      "@type": "Place",
+      "name": "St. John's, Newfoundland",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "St. John's",
+        "addressRegion": "Newfoundland and Labrador",
+        "addressCountry": "CA"
+      }
+    }
+  ],
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Snow White Laundry Overshare",
+    "url": "https://snowwhitelaundry.co/overshare"
+  }
+}

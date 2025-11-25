@@ -1,0 +1,115 @@
+name: Snow White Laundry — Breadcrumb Writer
+
+on:
+  workflow_dispatch:
+    inputs:
+      breadcrumb_md:
+        description: 'The breadcrumb markdown content'
+        required: true
+        type: string
+      breadcrumb_title:
+        description: 'The breadcrumb title'
+        required: true
+        type: string
+  repository_dispatch:
+    types: [swl_new_breadcrumb]
+
+jobs:
+  write-breadcrumb:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Write breadcrumb to repo
+        env:
+          BREADCRUMB_MD: ${{ github.event.client_payload.BREADCRUMB_MD || inputs.breadcrumb_md }}
+          BREADCRUMB_TITLE: ${{ github.event.client_payload.BREADCRUMB_TITLE || inputs.breadcrumb_title }}
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+
+          function slugify(text) {
+            return text
+              .toLowerCase()
+              .trim()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/[\s_-]+/g, '-')
+              .replace(/^-+|-+$/g, '');
+          }
+
+          const markdown = process.env.BREADCRUMB_MD;
+          const titleInput = process.env.BREADCRUMB_TITLE;
+
+          if (!markdown) {
+            console.log('No breadcrumb markdown provided, skipping.');
+            process.exit(0);
+          }
+
+          // Extract title from frontmatter or use provided title
+          const titleMatch = markdown.match(/title:\s*["']?([^"'\n]+)["']?/);
+          const title = titleMatch ? titleMatch[1].trim() : titleInput || 'untitled';
+          const slug = slugify(title);
+
+          const breadcrumbsDir = path.join('swl-overshare', 'breadcrumbs');
+          const filePath = path.join(breadcrumbsDir, `breadcrumb-${slug}.md`);
+
+          // Ensure directory exists
+          if (!fs.existsSync(breadcrumbsDir)) {
+            fs.mkdirSync(breadcrumbsDir, { recursive: true });
+          }
+
+          // Write the breadcrumb file
+          fs.writeFileSync(filePath, markdown, 'utf8');
+          console.log(`Wrote breadcrumb to: ${filePath}`);
+
+          // Update manifest
+          const manifestPath = path.join(breadcrumbsDir, 'manifest.json');
+          if (fs.existsSync(manifestPath)) {
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+            const fileName = `breadcrumb-${slug}.md`;
+            
+            if (!manifest.breadcrumbs.includes(fileName)) {
+              manifest.breadcrumbs.push(fileName);
+              manifest.breadcrumbs.sort();
+              manifest.breadcrumbs = [...new Set(manifest.breadcrumbs)];
+              fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf8');
+              console.log(`Updated manifest with: ${fileName}`);
+            }
+          }
+
+          // Export title for commit message
+          const outputFile = process.env.GITHUB_OUTPUT;
+          if (outputFile) {
+            fs.appendFileSync(outputFile, `title=${title}\n`);
+            fs.appendFileSync(outputFile, `slug=${slug}\n`);
+          }
+          EOF
+
+      - name: Commit and push changes
+        env:
+          BREADCRUMB_TITLE: ${{ github.event.client_payload.BREADCRUMB_TITLE || inputs.breadcrumb_title }}
+        run: |
+          git config user.name "Snow White Laundry Bot"
+          git config user.email "bot@snowwhitelaundry.ai"
+          git add swl-overshare/
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add breadcrumb: ${BREADCRUMB_TITLE:-new breadcrumb}"
+            git push
+            echo "Changes committed and pushed"
+          fi
