@@ -1,5 +1,3 @@
-"use server";
-
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/shared/supabase";
 import { getSessionFromCookies } from "@/lib/shared/session";

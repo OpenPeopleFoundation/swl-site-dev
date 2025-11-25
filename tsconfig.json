@@ -20,7 +20,7 @@
     "baseUrl": ".",
     "paths": {
       "@/shared/*": ["./shared/*"],
-      "@/apps/*": ["./apps/*"],
+      "@/apps/*": ["./src/apps/*", "./apps/*"],
       "@/lib/*": ["./src/lib/*"],
       "@/components/*": ["./src/components/*"],
       "@/*": ["./src/*"]
