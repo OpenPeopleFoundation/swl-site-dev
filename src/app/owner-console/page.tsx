@@ -1,5 +1,5 @@
 import { ensureOwner } from "./ensureOwner";
-import OwnerSchedulingConsole from "@/components/staff/OwnerSchedulingConsole";
+import OwnerSchedulingConsole from "@/domains/staff/components/OwnerSchedulingConsole";
 
 export default async function OwnerConsolePage() {
   await ensureOwner();

@@ -163,6 +163,330 @@ values
   )
 on conflict (id) do nothing;
 
+-- POS schema ---------------------------------------------------------------
+
+create table if not exists public.pos_zones (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  label text not null,
+  sort_order integer default 0,
+  created_at timestamptz default now()
+);
+
+create table if not exists public.pos_tables (
+  id uuid primary key default gen_random_uuid(),
+  zone_id uuid references public.pos_zones(id) on delete set null,
+  slug text unique not null,
+  label text not null,
+  seat_count integer not null default 2,
+  can_combine boolean default true,
+  sort_order integer default 0,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create or replace function public.set_pos_tables_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_pos_tables_updated on public.pos_tables;
+create trigger trg_pos_tables_updated
+before update on public.pos_tables
+for each row execute procedure public.set_pos_tables_updated_at();
+
+create table if not exists public.pos_menu_categories (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  label text not null,
+  accent_color text default '#ffffff',
+  sort_order integer default 0,
+  created_at timestamptz default now()
+);
+
+create table if not exists public.pos_menu_items (
+  id uuid primary key default gen_random_uuid(),
+  category_id uuid references public.pos_menu_categories(id) on delete cascade,
+  slug text unique not null,
+  name text not null,
+  price numeric(10,2) not null,
+  tags text[] default '{}',
+  modifier_key text,
+  is_active boolean default true,
+  sort_order integer default 0,
+  created_at timestamptz default now()
+);
+
+create table if not exists public.pos_modifier_options (
+  id uuid primary key default gen_random_uuid(),
+  modifier_key text not null,
+  option_code text not null,
+  label text not null,
+  default_applied boolean default false,
+  sort_order integer default 0,
+  unique (modifier_key, option_code)
+);
+
+create table if not exists public.pos_tickets (
+  id uuid primary key default gen_random_uuid(),
+  table_ids uuid[] not null default '{}',
+  table_slugs text[] not null default '{}',
+  seat_map jsonb default '[]',
+  guest_names text[] default '{}',
+  status text not null default 'ordering',
+  current_course text,
+  receipt_note text,
+  last_fire_at timestamptz,
+  seated_at timestamptz default now(),
+  revision integer not null default 0,
+  created_by text,
+  updated_by text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create or replace function public.bump_pos_ticket_revision()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  new.revision = old.revision + 1;
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_pos_ticket_revision on public.pos_tickets;
+create trigger trg_pos_ticket_revision
+before update on public.pos_tickets
+for each row execute procedure public.bump_pos_ticket_revision();
+
+create table if not exists public.pos_ticket_lines (
+  id uuid primary key default gen_random_uuid(),
+  ticket_id uuid references public.pos_tickets(id) on delete cascade,
+  menu_item_id uuid references public.pos_menu_items(id) on delete set null,
+  display_name text not null,
+  seat_label text not null,
+  price numeric(10,2) not null,
+  qty integer not null default 1,
+  modifier_key text,
+  modifiers text[] default '{}',
+  comp boolean default false,
+  split_mode text default 'none',
+  transfer_to text,
+  custom_split_note text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create or replace function public.touch_pos_ticket_lines()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_pos_ticket_lines_updated on public.pos_ticket_lines;
+create trigger trg_pos_ticket_lines_updated
+before update on public.pos_ticket_lines
+for each row execute procedure public.touch_pos_ticket_lines();
+
+create table if not exists public.pos_payments (
+  id uuid primary key default gen_random_uuid(),
+  ticket_id uuid references public.pos_tickets(id) on delete cascade,
+  amount numeric(12,2) not null,
+  method text not null,
+  status text not null default 'pending',
+  reference_id text,
+  recorded_by text,
+  created_at timestamptz default now()
+);
+
+create index if not exists pos_payments_ticket_idx
+  on public.pos_payments(ticket_id);
+
+create table if not exists public.pos_audit_log (
+  id uuid primary key default gen_random_uuid(),
+  ticket_id uuid references public.pos_tickets(id) on delete set null,
+  actor_email text,
+  actor_role text,
+  action text not null,
+  details jsonb default '{}'::jsonb,
+  created_at timestamptz default now()
+);
+
+create index if not exists pos_audit_log_ticket_idx
+  on public.pos_audit_log(ticket_id);
+
+alter table public.pos_tables enable row level security;
+alter table public.pos_menu_categories enable row level security;
+alter table public.pos_menu_items enable row level security;
+alter table public.pos_modifier_options enable row level security;
+alter table public.pos_tickets enable row level security;
+alter table public.pos_ticket_lines enable row level security;
+
+drop policy if exists "read pos tables" on public.pos_tables;
+create policy "read pos tables"
+on public.pos_tables
+for select
+using (true);
+
+drop policy if exists "read menu categories" on public.pos_menu_categories;
+create policy "read menu categories"
+on public.pos_menu_categories
+for select
+using (true);
+
+drop policy if exists "read menu items" on public.pos_menu_items;
+create policy "read menu items"
+on public.pos_menu_items
+for select
+using (true);
+
+drop policy if exists "read modifier options" on public.pos_modifier_options;
+create policy "read modifier options"
+on public.pos_modifier_options
+for select
+using (true);
+
+drop policy if exists "service manage tickets" on public.pos_tickets;
+create policy "service manage tickets"
+on public.pos_tickets
+using (true)
+with check (true);
+
+drop policy if exists "service manage ticket lines" on public.pos_ticket_lines;
+create policy "service manage ticket lines"
+on public.pos_ticket_lines
+using (true)
+with check (true);
+
+insert into public.pos_zones (id, slug, label, sort_order)
+values
+  ('00000000-0000-0000-0000-000000000101', 'dining', 'Dining Room', 10),
+  ('00000000-0000-0000-0000-000000000102', 'chef', 'Chef Counter', 20),
+  ('00000000-0000-0000-0000-000000000103', 'bar', 'Bar', 30)
+on conflict (id) do update
+set slug = excluded.slug,
+    label = excluded.label,
+    sort_order = excluded.sort_order;
+
+insert into public.pos_tables (id, zone_id, slug, label, seat_count, can_combine, sort_order)
+values
+  ('00000000-0000-0000-0000-000000001001', '00000000-0000-0000-0000-000000000101', 'd-01', 'Dining 01', 2, true, 10),
+  ('00000000-0000-0000-0000-000000001002', '00000000-0000-0000-0000-000000000101', 'd-02', 'Dining 02', 2, true, 20),
+  ('00000000-0000-0000-0000-000000001003', '00000000-0000-0000-0000-000000000101', 'd-03', 'Dining 03', 2, true, 30),
+  ('00000000-0000-0000-0000-000000001004', '00000000-0000-0000-0000-000000000101', 'd-04', 'Dining 04', 4, true, 40),
+  ('00000000-0000-0000-0000-000000001101', '00000000-0000-0000-0000-000000000102', 'chef-1', 'Chef 1', 1, false, 10),
+  ('00000000-0000-0000-0000-000000001102', '00000000-0000-0000-0000-000000000102', 'chef-2', 'Chef 2', 1, false, 20),
+  ('00000000-0000-0000-0000-000000001201', '00000000-0000-0000-0000-000000000103', 'bar-1', 'Bar 1', 1, false, 10),
+  ('00000000-0000-0000-0000-000000001202', '00000000-0000-0000-0000-000000000103', 'bar-2', 'Bar 2', 1, false, 20)
+on conflict (id) do update
+set zone_id = excluded.zone_id,
+    slug = excluded.slug,
+    label = excluded.label,
+    seat_count = excluded.seat_count,
+    can_combine = excluded.can_combine,
+    sort_order = excluded.sort_order;
+
+insert into public.pos_menu_categories (id, slug, label, accent_color, sort_order)
+values
+  ('00000000-0000-0000-0000-000000010001', 'snacks', 'Snacks', '#00FF9C', 10),
+  ('00000000-0000-0000-0000-000000010002', 'plates', 'Plates', '#8A7CFF', 20),
+  ('00000000-0000-0000-0000-000000010003', 'desserts', 'Desserts', '#FF82E0', 30),
+  ('00000000-0000-0000-0000-000000010004', 'pairings', 'Pairings', '#42D9FF', 40)
+on conflict (id) do update
+set slug = excluded.slug,
+    label = excluded.label,
+    accent_color = excluded.accent_color,
+    sort_order = excluded.sort_order;
+
+insert into public.pos_menu_items (id, category_id, slug, name, price, tags, modifier_key, sort_order)
+values
+  ('00000000-0000-0000-0000-000000020001', '00000000-0000-0000-0000-000000010001', 'shiso-spritz', 'Shiso Spritz', 18, array['bev'], 'shiso', 10),
+  ('00000000-0000-0000-0000-000000020002', '00000000-0000-0000-0000-000000010001', 'sea-lettuce-chip', 'Sea Lettuce Chip', 12, null, 'chip', 20),
+  ('00000000-0000-0000-0000-000000020003', '00000000-0000-0000-0000-000000010001', 'coal-pearls', 'Coal Pearls', 15, null, null, 30),
+  ('00000000-0000-0000-0000-000000020101', '00000000-0000-0000-0000-000000010002', 'charred-oyster', 'Charred Oyster', 28, null, 'oyster', 10),
+  ('00000000-0000-0000-0000-000000020102', '00000000-0000-0000-0000-000000010002', 'ember-beet', 'Ember Beet', 24, null, null, 20),
+  ('00000000-0000-0000-0000-000000020103', '00000000-0000-0000-0000-000000010002', 'river-trout', 'River Trout', 34, null, null, 30),
+  ('00000000-0000-0000-0000-000000020104', '00000000-0000-0000-0000-000000010002', 'aged-duck', 'Aged Duck', 42, null, 'duck', 40),
+  ('00000000-0000-0000-0000-000000020201', '00000000-0000-0000-0000-000000010003', 'black-sesame-cloud', 'Black Sesame Cloud', 16, null, null, 10),
+  ('00000000-0000-0000-0000-000000020202', '00000000-0000-0000-0000-000000010003', 'frozen-yuzu-leaf', 'Frozen Yuzu Leaf', 14, null, null, 20),
+  ('00000000-0000-0000-0000-000000020301', '00000000-0000-0000-0000-000000010004', 'wine-pairing', 'Wine Pairing', 68, null, null, 10),
+  ('00000000-0000-0000-0000-000000020302', '00000000-0000-0000-0000-000000010004', 'na-pairing', 'NA Pairing', 48, null, null, 20)
+on conflict (id) do update
+set category_id = excluded.category_id,
+    slug = excluded.slug,
+    name = excluded.name,
+    price = excluded.price,
+    tags = excluded.tags,
+    modifier_key = excluded.modifier_key,
+    sort_order = excluded.sort_order;
+
+insert into public.pos_modifier_options (modifier_key, option_code, label, default_applied, sort_order)
+values
+  ('shiso', 'zero-proof', 'Zero-proof version', false, 10),
+  ('shiso', 'less-sweet', 'Less sweet', false, 20),
+  ('chip', 'no-sesame', 'No sesame', false, 10),
+  ('chip', 'extra-crisp', 'Extra crisp', false, 20),
+  ('oyster', 'allium-free', 'Remove allium', false, 10),
+  ('oyster', 'extra-caviar', 'Extra caviar', false, 20),
+  ('duck', 'medium-rare', 'Cook medium rare', true, 10),
+  ('duck', 'sauce-side', 'Sauce on the side', false, 20)
+on conflict (modifier_key, option_code) do update
+set label = excluded.label,
+    default_applied = excluded.default_applied,
+    sort_order = excluded.sort_order;
+
+insert into public.pos_tickets (id, table_ids, table_slugs, seat_map, guest_names, status, current_course, receipt_note, last_fire_at, seated_at, revision, created_by, updated_by)
+values (
+  '00000000-0000-0000-0000-000000030001',
+  array['00000000-0000-0000-0000-000000001001']::uuid[],
+  array['d-01'],
+  jsonb_build_array('d-01-seat-1', 'd-01-seat-2'),
+  array['Aya', 'Ken'],
+  'ordering',
+  'Course II',
+  'Celebrating product launch.',
+  now() - interval '6 minutes',
+  now() - interval '40 minutes',
+  1,
+  'tom@openpeople.ai',
+  'tom@openpeople.ai'
+)
+on conflict (id) do nothing;
+
+insert into public.pos_ticket_lines (ticket_id, menu_item_id, display_name, seat_label, price, qty, modifier_key, modifiers, comp, split_mode)
+values
+  (
+    '00000000-0000-0000-0000-000000030001',
+    '00000000-0000-0000-0000-000000020001',
+    'Shiso Spritz',
+    'd-01-seat-1',
+    18,
+    1,
+    'shiso',
+    array['zero-proof'],
+    false,
+    'none'
+  ),
+  (
+    '00000000-0000-0000-0000-000000030001',
+    '00000000-0000-0000-0000-000000020101',
+    'Charred Oyster',
+    'd-01-seat-2',
+    28,
+    2,
+    'oyster',
+    array['allium-free'],
+    false,
+    'even'
+  )
+on conflict (id) do nothing;
+
 create table if not exists public.user_profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   name text,
@@ -244,6 +568,197 @@ create table if not exists public.system_logs (
 
 create index if not exists system_logs_action_idx
   on public.system_logs(action, created_at desc);
+
+-- POS schema ---------------------------------------------------------------
+
+create table if not exists public.pos_menu_categories (
+  id uuid primary key default gen_random_uuid(),
+  label text not null,
+  color text,
+  display_order integer default 0,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists public.pos_modifier_groups (
+  id uuid primary key default gen_random_uuid(),
+  label text not null,
+  description text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists public.pos_modifiers (
+  id uuid primary key default gen_random_uuid(),
+  group_id uuid references public.pos_modifier_groups(id) on delete cascade,
+  label text not null,
+  default_applied boolean default false,
+  extra_cost numeric(10,2) default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists public.pos_menu_items (
+  id uuid primary key default gen_random_uuid(),
+  category_id uuid references public.pos_menu_categories(id) on delete set null,
+  group_id uuid references public.pos_modifier_groups(id) on delete set null,
+  name text not null,
+  description text,
+  price numeric(10,2) not null,
+  tags text[] default '{}',
+  available boolean default true,
+  display_order integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists public.pos_tables (
+  id uuid primary key default gen_random_uuid(),
+  label text not null,
+  zone text not null,
+  seats integer not null default 2,
+  can_combine boolean default false,
+  status text not null default 'open',
+  is_active boolean default true,
+  display_order integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists public.pos_sessions (
+  id uuid primary key default gen_random_uuid(),
+  table_id uuid references public.pos_tables(id) on delete set null,
+  reservation_id integer references public.reservations(id) on delete set null,
+  started_by uuid references public.staff(id) on delete set null,
+  status text not null default 'open',
+  party_size integer,
+  opened_at timestamptz default now(),
+  closed_at timestamptz,
+  notes text
+);
+
+create table if not exists public.pos_checks (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid references public.pos_sessions(id) on delete cascade,
+  status text not null default 'open',
+  subtotal numeric(10,2) default 0,
+  tax numeric(10,2) default 0,
+  service numeric(10,2) default 0,
+  total numeric(10,2) default 0,
+  comp_total numeric(10,2) default 0,
+  receipt_note text,
+  created_at timestamptz default now(),
+  closed_at timestamptz,
+  closed_by uuid references public.staff(id) on delete set null
+);
+
+create table if not exists public.pos_check_lines (
+  id uuid primary key default gen_random_uuid(),
+  check_id uuid references public.pos_checks(id) on delete cascade,
+  menu_item_id uuid references public.pos_menu_items(id) on delete set null,
+  seat_label text,
+  qty integer not null default 1,
+  price numeric(10,2) not null,
+  display_name text not null,
+  modifier_ids uuid[] default '{}',
+  modifier_notes text,
+  comp boolean default false,
+  split_mode text default 'none',
+  transfer_to text,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now()
+);
+
+create table if not exists public.pos_payments (
+  id uuid primary key default gen_random_uuid(),
+  check_id uuid references public.pos_checks(id) on delete cascade,
+  amount numeric(10,2) not null,
+  tip_amount numeric(10,2) default 0,
+  method text not null,
+  status text not null default 'pending',
+  processor text,
+  processor_charge_id text,
+  device_id uuid references public.device_connections(id) on delete set null,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  processed_at timestamptz
+);
+
+create table if not exists public.pos_device_sessions (
+  id uuid primary key default gen_random_uuid(),
+  device_id uuid references public.device_connections(id) on delete cascade,
+  staff_id uuid references public.staff(id) on delete set null,
+  started_at timestamptz default now(),
+  ended_at timestamptz,
+  trust_level text default 'pending',
+  notes text
+);
+
+create index if not exists pos_tables_zone_idx on public.pos_tables(zone);
+create index if not exists pos_menu_items_category_idx on public.pos_menu_items(category_id);
+create index if not exists pos_sessions_table_idx on public.pos_sessions(table_id) where status <> 'closed';
+create index if not exists pos_checks_session_idx on public.pos_checks(session_id);
+create index if not exists pos_check_lines_check_idx on public.pos_check_lines(check_id);
+create index if not exists pos_payments_check_idx on public.pos_payments(check_id);
+
+insert into public.pos_menu_categories (id, label, color, display_order)
+values
+  ('11111111-aaaa-aaaa-aaaa-111111111111', 'Snacks', '#00FF9C', 1),
+  ('22222222-bbbb-bbbb-bbbb-222222222222', 'Plates', '#8A7CFF', 2),
+  ('33333333-cccc-cccc-cccc-333333333333', 'Desserts', '#FF82E0', 3),
+  ('44444444-dddd-dddd-dddd-444444444444', 'Pairings', '#42D9FF', 4)
+on conflict (id) do update set label = excluded.label;
+
+insert into public.pos_modifier_groups (id, label)
+values
+  ('aaaa1111-0000-0000-0000-000000000000', 'Shiso Adjustments'),
+  ('bbbb2222-0000-0000-0000-000000000000', 'Oyster Notes'),
+  ('cccc3333-0000-0000-0000-000000000000', 'Duck Fire'),
+  ('dddd4444-0000-0000-0000-000000000000', 'Chip Tweaks')
+on conflict (id) do update set label = excluded.label;
+
+insert into public.pos_modifiers (id, group_id, label, default_applied)
+values
+  ('aaaa1111-1111-1111-1111-111111111111', 'aaaa1111-0000-0000-0000-000000000000', 'Zero-proof version', false),
+  ('aaaa1111-2222-2222-2222-222222222222', 'aaaa1111-0000-0000-0000-000000000000', 'Less sweet', false),
+  ('bbbb2222-1111-1111-1111-111111111111', 'bbbb2222-0000-0000-0000-000000000000', 'Remove allium', false),
+  ('bbbb2222-2222-2222-2222-222222222222', 'bbbb2222-0000-0000-0000-000000000000', 'Extra caviar', false),
+  ('cccc3333-1111-1111-1111-111111111111', 'cccc3333-0000-0000-0000-000000000000', 'Cook medium rare', true),
+  ('cccc3333-2222-2222-2222-222222222222', 'cccc3333-0000-0000-0000-000000000000', 'Sauce on side', false),
+  ('dddd4444-1111-1111-1111-111111111111', 'dddd4444-0000-0000-0000-000000000000', 'No sesame', false),
+  ('dddd4444-2222-2222-2222-222222222222', 'dddd4444-0000-0000-0000-000000000000', 'Extra crisp', false)
+on conflict (id) do update set label = excluded.label;
+
+insert into public.pos_menu_items (id, category_id, group_id, name, price, tags, display_order)
+values
+  ('99999999-aaaa-aaaa-aaaa-111111111111', '11111111-aaaa-aaaa-aaaa-111111111111', 'aaaa1111-0000-0000-0000-000000000000', 'Shiso Spritz', 18, array['bev'], 1),
+  ('99999999-bbbb-bbbb-bbbb-222222222222', '11111111-aaaa-aaaa-aaaa-111111111111', 'dddd4444-0000-0000-0000-000000000000', 'Sea Lettuce Chip', 12, array['veg'], 2),
+  ('99999999-cccc-cccc-cccc-333333333333', '11111111-aaaa-aaaa-aaaa-111111111111', null, 'Coal Pearls', 15, '{}', 3),
+  ('88888888-aaaa-aaaa-aaaa-111111111111', '22222222-bbbb-bbbb-bbbb-222222222222', 'bbbb2222-0000-0000-0000-000000000000', 'Charred Oyster', 28, '{}', 1),
+  ('88888888-bbbb-bbbb-bbbb-222222222222', '22222222-bbbb-bbbb-bbbb-222222222222', null, 'Ember Beet', 24, '{}', 2),
+  ('88888888-cccc-cccc-cccc-333333333333', '22222222-bbbb-bbbb-bbbb-222222222222', null, 'River Trout', 34, '{}', 3),
+  ('88888888-dddd-dddd-dddd-444444444444', '22222222-bbbb-bbbb-bbbb-222222222222', 'cccc3333-0000-0000-0000-000000000000', 'Aged Duck', 42, '{}', 4),
+  ('77777777-aaaa-aaaa-aaaa-111111111111', '33333333-cccc-cccc-cccc-333333333333', null, 'Black Sesame Cloud', 16, '{}', 1),
+  ('77777777-bbbb-bbbb-bbbb-222222222222', '33333333-cccc-cccc-cccc-333333333333', null, 'Frozen Yuzu Leaf', 14, '{}', 2),
+  ('66666666-aaaa-aaaa-aaaa-111111111111', '44444444-dddd-dddd-dddd-444444444444', null, 'Wine Pairing', 68, '{}', 1),
+  ('66666666-bbbb-bbbb-bbbb-222222222222', '44444444-dddd-dddd-dddd-444444444444', null, 'NA Pairing', 48, '{}', 2)
+on conflict (id) do update set name = excluded.name, price = excluded.price;
+
+insert into public.pos_tables (id, label, zone, seats, can_combine, display_order)
+select gen_random_uuid(), concat('Dining ', lpad((idx)::text, 2, '0')), 'dining', 2, true, idx
+from generate_series(1, 12) as idx
+on conflict do nothing;
+
+insert into public.pos_tables (id, label, zone, seats, can_combine, display_order)
+select gen_random_uuid(), concat('Chef ', idx::text), 'chef', 1, false, 200 + idx
+from generate_series(1, 4) as idx
+on conflict do nothing;
+
+insert into public.pos_tables (id, label, zone, seats, can_combine, display_order)
+select gen_random_uuid(), concat('Bar ', idx::text), 'bar', 1, false, 300 + idx
+from generate_series(1, 6) as idx
+on conflict do nothing;
 
 -- Guest-facing schema -------------------------------------------------------
 

@@ -27,6 +27,8 @@ Navigate to `http://localhost:3000/gate` to log in with a staff email/password s
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service Role API key used by the gate API route |
 | `NEXT_PUBLIC_SITE_MODE` | Static flag used for telemetry/analytics (defaults to `staff`) |
+| `NEXT_PUBLIC_ENABLE_MSW` | Optional flag to force MSW handlers on (defaults to auto-on in development/test) |
+| `NEXT_PUBLIC_DISABLE_MSW` | Optional flag to force MSW handlers off even in development |
 
 ## Supabase schema
 

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { listCompletedEvents } from "@/apps/events/lib/queries";
+import { listCompletedEvents } from "@/domains/events/lib/queries";
 
 export const dynamic = "force-dynamic";
 

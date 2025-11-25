@@ -1,6 +1,6 @@
-import { ProposalGenerator } from "@/apps/events/components/ProposalGenerator";
-import { ContractFlow } from "@/apps/events/components/ContractFlow";
-import { getEventById } from "@/apps/events/lib/queries";
+import { ProposalGenerator } from "@/domains/events/components/ProposalGenerator";
+import { ContractFlow } from "@/domains/events/components/ContractFlow";
+import { getEventById } from "@/domains/events/lib/queries";
 
 type PageProps = {
   params: { id: string };
