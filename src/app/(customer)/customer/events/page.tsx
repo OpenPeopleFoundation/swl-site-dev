@@ -7,6 +7,7 @@ import { ReserveOpeningWeekForm } from "@/domains/customer/components/ReserveOpe
 import { CustomerAiHandbook } from "@/domains/customer/components/CustomerAiHandbook";
 import type { ReserveFormState } from "@/domains/customer/types";
 import { getSupabaseAdmin } from "@/lib/shared/supabase";
+import type { PrivateEvent } from "@/domains/events/lib/queries";
 
 function formatDate(value?: string | null) {
   if (!value) return "TBD";
@@ -22,18 +23,7 @@ function formatDate(value?: string | null) {
 
 export default async function CustomerEventsPage() {
   // No authentication required - customers can browse freely
-  const events: Array<{
-    id: string;
-    guest_name: string | null;
-    guest_email: string | null;
-    event_type: string | null;
-    preferred_date: string | null;
-    party_size: number | null;
-    status: string;
-    proposal_pdf_url: string | null;
-    deposit_paid: boolean | null;
-    special_requests: string | null;
-  }> = [];
+  const events: PrivateEvent[] = [];
 
   const initialActionState: WizardActionState = { status: "idle" };
   const reserveInitialState: ReserveFormState = { status: "idle" };
