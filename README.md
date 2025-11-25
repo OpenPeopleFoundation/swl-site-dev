@@ -432,8 +432,8 @@ WHERE email = 'user@example.com';
 
 Based on the code, these users are configured:
 
-1. `tom@openpeople.ai` - Role: `owner`
-2. `tom@snowwhitelaundry.com` - Role: `staff`
+1. `tom@snowwhitelaundry.co` - Role: `owner`
+2. `tom@openpeople.ai` - Role: `staff`
 3. `toml_ne@icloud.com` - Role: `customer`
 
 ### Important Notes

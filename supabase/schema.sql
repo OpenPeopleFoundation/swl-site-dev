@@ -118,6 +118,7 @@ with check (auth.uid() = user_id);
 insert into staff_access (email, password_hash, role, must_reset)
 values
   ('tom@openpeople.ai', crypt('opendeck', gen_salt('bf')), 'staff', false),
+  ('tom@snowwhitelaundry.co', crypt('opendeck', gen_salt('bf')), 'owner', false),
   ('ken@snowwhitelaundry.co', crypt('temppass', gen_salt('bf')), 'staff', false),
   ('emma@snowwhitelaundry.co', crypt('temppass', gen_salt('bf')), 'staff', false),
   ('toml_ne@icloud.com', crypt('test', gen_salt('bf')), 'customer', false)

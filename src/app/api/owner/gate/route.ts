@@ -54,13 +54,13 @@ const SEEDED_USERS = [
     email: "tom@openpeople.ai",
     passwordEnv: "GATE_TOM_PASSWORD",
     fallbackPassword: "opendeck",
-    metadata: { role: "owner" },
+    metadata: { role: "staff" },
   },
   {
-    email: "tom@snowwhitelaundry.com",
+    email: "tom@snowwhitelaundry.co",
     passwordEnv: "GATE_TOM_STAFF_PASSWORD",
     fallbackPassword: "opendeck",
-    metadata: { role: "staff" },
+    metadata: { role: "owner" },
   },
   {
     email: "toml_ne@icloud.com",

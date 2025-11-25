@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { motion } from "framer-motion";
 import { StarField } from "@/components/design/StarField";
+import { GlassNav } from "@/components/design/GlassNav";
 import { RestaurantSchema } from "@/lib/jsonld-components";
 
 /**
@@ -133,7 +134,10 @@ export default function Landing() {
           aria-hidden="true"
         />
 
-        <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-24 px-4 py-12 sm:px-6 sm:py-16 md:px-10 lg:px-12">
+        <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-col gap-20 px-4 py-12 sm:px-6 sm:py-16 md:px-10 lg:px-12">
+          <div className="flex justify-end">
+            <GlassNav className="justify-end text-white/70" />
+          </div>
           <motion.header
             className="space-y-8"
             initial={{ opacity: 0, y: 24 }}

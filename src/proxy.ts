@@ -5,10 +5,26 @@ const DEFAULT_GATE_HOSTS = [
   "ai.snowwhitelaundry.co",
   "www.ai.snowwhitelaundry.co",
 ];
+const DEFAULT_CUSTOMER_HOSTS = [
+  "snowwhitelaundry.co",
+  "www.snowwhitelaundry.co",
+];
 
 const GATE_HOSTS = (() => {
   const hosts = new Set(DEFAULT_GATE_HOSTS);
   const envHost = process.env.GATE_HOST?.toLowerCase();
+  if (envHost) {
+    const normalizedEnvHost = envHost.split(":")[0];
+    if (normalizedEnvHost) {
+      hosts.add(normalizedEnvHost);
+    }
+  }
+  return hosts;
+})();
+
+const CUSTOMER_HOSTS = (() => {
+  const hosts = new Set(DEFAULT_CUSTOMER_HOSTS);
+  const envHost = process.env.CUSTOMER_HOST?.toLowerCase();
   if (envHost) {
     const normalizedEnvHost = envHost.split(":")[0];
     if (normalizedEnvHost) {
@@ -30,11 +46,26 @@ export default function proxy(request: NextRequest) {
 
   const isGateDomain =
     normalizedRequestHost.length > 0 && GATE_HOSTS.has(normalizedRequestHost);
+  const isCustomerDomain =
+    normalizedRequestHost.length > 0 &&
+    CUSTOMER_HOSTS.has(normalizedRequestHost);
 
   if (isGateDomain && !pathname.startsWith("/gate")) {
     const url = request.nextUrl.clone();
     url.pathname = "/gate";
     return NextResponse.rewrite(url);
+  }
+
+  if (isCustomerDomain) {
+    const url = request.nextUrl.clone();
+    if (pathname === "/" || pathname === "/gate") {
+      url.pathname = "/customer";
+      return NextResponse.rewrite(url);
+    }
+    if (pathname.startsWith("/staff")) {
+      url.pathname = "/gate";
+      return NextResponse.rewrite(url);
+    }
   }
 
   if (!cookie && pathname.startsWith("/staff")) {
