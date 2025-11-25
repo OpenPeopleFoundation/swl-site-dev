@@ -95,23 +95,25 @@ export default async function CustomerEventsPage() {
   }
 
   return (
-    <main className="customer-shell min-h-screen text-white" data-shell="customer">
-      <div className="customer-shell__inner space-y-8">
-      <header className="space-y-2 text-center">
-        <p className="text-xs uppercase tracking-[0.4em] text-white/40">
-          Snow White Laundry
+    <>
+      <header className="mb-16 text-center">
+        <p className="mb-3 text-xs uppercase tracking-[0.5em] text-cyan-400/60">
+          Private Events
         </p>
-        <h1 className="text-3xl font-light">Your Event Plans</h1>
-        <p className="text-sm text-white/60">
+        <h1 className="font-['Eurostile',_sans-serif] text-4xl font-light tracking-wide text-white sm:text-5xl">
+          Your Event Plans
+        </h1>
+        <p className="mt-6 max-w-2xl mx-auto text-lg leading-relaxed text-white/60">
           {events.length > 0
             ? "Track proposals, menus, deposits, and service notes in one place."
             : "Request received. As soon as we confirm a date, you’ll see it here."}
         </p>
       </header>
 
-      <section className="rounded-3xl border border-white/10 bg-black/40 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
-        <h2 className="text-2xl font-light text-white">Plan a New Experience</h2>
-        <p className="mt-2 text-sm text-white/60">
+      <div className="space-y-12">
+        <section className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 sm:p-12 backdrop-blur-sm">
+          <h2 className="text-2xl font-light mb-4 text-white/90">Plan a New Experience</h2>
+          <p className="mb-6 text-white/60 leading-relaxed">
           Walk through the details and we’ll craft a proposal tailored to your night.
         </p>
         <CustomerEventWizard
@@ -121,9 +123,9 @@ export default async function CustomerEventsPage() {
         />
       </section>
 
-      <section className="rounded-3xl border border-white/10 bg-white/5 p-6 text-white shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
-        <h2 className="text-2xl font-light">Reserve Opening Week</h2>
-        <p className="mt-2 text-sm text-white/70">
+        <section className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 sm:p-12 backdrop-blur-sm">
+          <h2 className="text-2xl font-light mb-4 text-white/90">Reserve Opening Week</h2>
+          <p className="mb-6 text-white/60 leading-relaxed">
           We’ll email you before reservations open to the public. Choose a launch
           night, dial in your party size, and add any celebration notes.
         </p>
@@ -133,14 +135,14 @@ export default async function CustomerEventsPage() {
         />
       </section>
 
-      <CustomerAiHandbook events={events} guestEmail={session.email} />
+        <CustomerAiHandbook events={events} guestEmail={session.email} />
 
-      <section className="space-y-4">
-        {events.map((event) => (
-          <article
-            key={event.id}
-            className="rounded-3xl border border-white/10 bg-white/5 p-6 text-white shadow-[0_30px_90px_rgba(0,0,0,0.55)]"
-          >
+        <section className="space-y-6">
+          {events.map((event) => (
+            <article
+              key={event.id}
+              className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 sm:p-12 backdrop-blur-sm transition-all hover:border-cyan-400/30 hover:bg-white/[0.05]"
+            >
             <div className="flex flex-col gap-2 md:flex-row md:items-baseline md:justify-between">
               <h2 className="text-2xl font-light">{event.event_type}</h2>
               <span className="text-sm uppercase tracking-[0.4em] text-white/50">
@@ -176,7 +178,7 @@ export default async function CustomerEventsPage() {
               </div>
             </dl>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
                 <h3 className="text-sm uppercase tracking-[0.3em] text-white/50">
                   Proposal
                 </h3>
@@ -184,7 +186,7 @@ export default async function CustomerEventsPage() {
                   {event.proposal_pdf_url ? (
                     <a
                       href={event.proposal_pdf_url}
-                      className="text-white underline-offset-2 hover:underline"
+                      className="text-cyan-400/70 hover:text-cyan-400 transition-colors underline-offset-2 hover:underline"
                     >
                       Download latest proposal
                     </a>
@@ -193,7 +195,7 @@ export default async function CustomerEventsPage() {
                   )}
                 </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
                 <h3 className="text-sm uppercase tracking-[0.3em] text-white/50">
                   Deposit
                 </h3>
@@ -205,7 +207,7 @@ export default async function CustomerEventsPage() {
               </div>
             </div>
             {event.special_requests && (
-              <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
                 <h3 className="text-sm uppercase tracking-[0.3em] text-white/50">
                   Vision Notes
                 </h3>
@@ -218,7 +220,7 @@ export default async function CustomerEventsPage() {
         ))}
 
         {events.length === 0 && (
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 text-center text-white/70">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-6 text-center text-white/70">
             <p>
               No events are linked to <strong>{session.email}</strong> yet.
             </p>
@@ -230,7 +232,7 @@ export default async function CustomerEventsPage() {
         )}
       </section>
       </div>
-    </main>
+    </>
   );
 }
 

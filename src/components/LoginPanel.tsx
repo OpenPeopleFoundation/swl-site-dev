@@ -198,13 +198,14 @@ export function LoginPanel({ nextPath, wakeSignal = 0 }: LoginPanelProps) {
       setNeedsReset(false);
       setResetPassword("");
       setResetConfirm("");
+      // Redirect based on role: owner/staff → staff side, customer → customer site
       const destination =
         nextPath ??
         (payload.role === "owner"
           ? "/owners/console"
-          : payload.role === "customer"
-            ? "/customer"
-            : "/staff");
+          : payload.role === "staff"
+            ? "/staff"
+            : "/customer/events");
       setStatus("RestaurantOS is ready.");
       setTimeout(() => {
         router.replace(destination);

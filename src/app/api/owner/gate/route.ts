@@ -45,24 +45,17 @@ export async function GET(request: Request) {
   }
 
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("staff_access")
-    .select("role")
-    .eq("email", email)
-    .maybeSingle<StaffAccessRecord>();
+  const user = await findSupabaseUserByEmail(supabase, email);
 
-  if (error) {
-    console.error("Gate lookup error", error);
-    return NextResponse.json({ error: "Lookup failed" }, { status: 500 });
-  }
-
-  if (!data) {
+  if (!user) {
     return NextResponse.json({ exists: false });
   }
 
+  const role = (user.user_metadata?.role as string | undefined) ?? "customer";
+
   return NextResponse.json({
     exists: true,
-    role: data.role ?? "staff",
+    role,
   });
 }
 
@@ -83,22 +76,10 @@ export async function POST(request: Request) {
     }
 
     const supabase = getSupabaseAdmin();
-    const { data, error: selectError } = await supabase
-      .from("staff_access")
-      .select("password_hash, role, must_reset")
-      .eq("email", email)
-      .maybeSingle<StaffAccessRecord>();
-
-    if (selectError) {
-      console.error("Gate lookup error", selectError);
-      return NextResponse.json(
-        { error: "Access check failed" },
-        { status: 500 },
-      );
-    }
+    const existingUser = await findSupabaseUserByEmail(supabase, email);
 
     if (intent === "register") {
-      if (data) {
+      if (existingUser) {
         return NextResponse.json(
           { error: "Account already exists" },
           { status: 409 },
@@ -110,70 +91,46 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-      const password_hash = await bcrypt.hash(password, 12);
-      const { error: insertError } = await supabase
-        .from("staff_access")
-        .insert({ email, password_hash, role: "customer" });
-      if (insertError) {
-        console.error("Gate register error", insertError);
-        return NextResponse.json(
-          { error: "Unable to create account" },
-          { status: 500 },
-        );
-      }
       try {
         await ensureSupabaseUser(email, password, "customer");
       } catch (syncError) {
         console.error(syncError);
         return NextResponse.json(
-          { error: "Unable to sync Supabase account" },
+          { error: "Unable to create account" },
           { status: 500 },
         );
       }
       return buildAuthCookieResponse({ email, role: "customer" });
     }
 
-    if (!data || !password) {
+    if (!existingUser || !password) {
       return NextResponse.json(
         { error: "Account not found" },
         { status: 404 },
       );
     }
 
-    const verified = await bcrypt.compare(password, data.password_hash);
+    // Authenticate with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (!verified) {
+    if (authError || !authData.user) {
       return NextResponse.json(
         { error: "Invalid password" },
         { status: 401 },
       );
     }
 
-    const resolvedRole = data.role ?? "staff";
+    const resolvedRole = (existingUser.user_metadata?.role as string | undefined) ?? "customer";
 
-    if (data.must_reset) {
-      if (!newPassword) {
-        return NextResponse.json(
-          { requiresPasswordReset: true },
-          { status: 409 },
-        );
-      }
+    // Handle password reset if needed
+    if (newPassword) {
       if (newPassword.length < 8) {
         return NextResponse.json(
           { error: "New password must be at least 8 characters long." },
           { status: 400 },
-        );
-      }
-      const nextHash = await bcrypt.hash(newPassword, 12);
-      const { error: resetError } = await supabase
-        .from("staff_access")
-        .update({ password_hash: nextHash, must_reset: false })
-        .eq("email", email);
-      if (resetError) {
-        console.error("Gate password reset error", resetError);
-        return NextResponse.json(
-          { error: "Unable to reset password" },
-          { status: 500 },
         );
       }
       try {
@@ -181,24 +138,10 @@ export async function POST(request: Request) {
       } catch (syncError) {
         console.error(syncError);
         return NextResponse.json(
-          { error: "Unable to sync Supabase account" },
+          { error: "Unable to reset password" },
           { status: 500 },
         );
       }
-      return buildAuthCookieResponse({
-        email,
-        role: resolvedRole,
-      });
-    }
-
-    try {
-      await ensureSupabaseUser(email, password, resolvedRole);
-    } catch (syncError) {
-      console.error(syncError);
-      return NextResponse.json(
-        { error: "Unable to sync Supabase account" },
-        { status: 500 },
-      );
     }
 
     return buildAuthCookieResponse({
