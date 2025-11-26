@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 
   const supabase = getSupabaseAdmin();
 
-  const { error } = await supabase.from("reservation_requests").insert({
+  const insertResult = await supabase.from("reservation_requests").insert({
     name,
     email,
     party_size: partySizeValue,
@@ -70,12 +70,28 @@ export async function POST(request: Request) {
     source,
   });
 
-  if (error) {
-    console.error("Failed to store reservation request", error);
-    return NextResponse.json(
-      { error: "Unable to record your request right now." },
-      { status: 500 },
-    );
+  if (insertResult.error) {
+    const fallbackResult = await supabase.from("mailing_list_signups").insert({
+      email,
+      source: `${source}_fallback`,
+      metadata: {
+        name,
+        party_size: partySizeValue,
+        visit_window: visitWindow,
+        notes,
+        intent: "reservation_request",
+      },
+    });
+
+    if (fallbackResult.error) {
+      console.error("Failed to store reservation request", insertResult.error, fallbackResult.error);
+      return NextResponse.json(
+        { error: "Unable to record your request right now." },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, fallback: true });
   }
 
   return NextResponse.json({ ok: true });

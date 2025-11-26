@@ -6,7 +6,6 @@ import AmbientScene from "@/shared/ui/AmbientScene";
 import { AuthWatcher } from "@/apps/core/AuthWatcher";
 import { AuthStatusBanner } from "@/shared/ui/AuthStatusBanner";
 import { ConditionalFloatingChat } from "@/shared/ui/ConditionalFloatingChat";
-import { CustomerConciergeLauncher } from "@/shared/ui/CustomerConciergeLauncher";
 import { ServiceWorkerRegister } from "@/shared/ui/ServiceWorkerRegister";
 import { MockServiceWorkerGate } from "@/components/testing/MockServiceWorkerGate";
 
@@ -59,7 +58,6 @@ export default function RootLayout({
         <AuthWatcher />
         {showAuthBanner && <AuthStatusBanner />}
         {children}
-        <CustomerConciergeLauncher />
         <ConditionalFloatingChat />
         <ServiceWorkerRegister />
         <MockServiceWorkerGate />

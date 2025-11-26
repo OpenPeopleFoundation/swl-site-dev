@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import FloatingChat from "@/shared/ui/FloatingChat";
-import { CustomerConciergeChat } from "@/domains/customer/components/CustomerConciergeChat";
+import { LaundryLineFloatingChat } from "@/shared/ui/LaundryLineFloatingChat";
 
 const HIDDEN_PREFIX = "/gate";
 const STAFF_PREFIXES = [
@@ -30,7 +30,7 @@ export function ConditionalFloatingChat() {
     SITE_MODE === "customer" || !isStaffSurface;
 
   if (preferCustomerChat) {
-    return <CustomerConciergeChat />;
+    return <LaundryLineFloatingChat />;
   }
 
   return <FloatingChat />;
