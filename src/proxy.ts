@@ -35,7 +35,7 @@ const CUSTOMER_HOSTS = (() => {
 })();
 
 export const config = {
-  matcher: ["/", "/staff/:path*"],
+  matcher: ["/((?!_next|api|public).*)"],
 };
 
 export default function proxy(request: NextRequest) {

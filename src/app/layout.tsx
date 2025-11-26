@@ -7,7 +7,6 @@ import { AuthWatcher } from "@/apps/core/AuthWatcher";
 import { AuthStatusBanner } from "@/shared/ui/AuthStatusBanner";
 import { ConditionalFloatingChat } from "@/shared/ui/ConditionalFloatingChat";
 import { CustomerConciergeLauncher } from "@/shared/ui/CustomerConciergeLauncher";
-import { PosToggleButton } from "@/apps/staff-console/shared/pos/PosToggleButton";
 import { ServiceWorkerRegister } from "@/shared/ui/ServiceWorkerRegister";
 import { MockServiceWorkerGate } from "@/components/testing/MockServiceWorkerGate";
 
@@ -60,7 +59,6 @@ export default function RootLayout({
         <AuthWatcher />
         {showAuthBanner && <AuthStatusBanner />}
         {children}
-        <PosToggleButton />
         <CustomerConciergeLauncher />
         <ConditionalFloatingChat />
         <ServiceWorkerRegister />

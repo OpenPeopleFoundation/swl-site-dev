@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 import Link from "next/link";
 import { StarField } from "@/components/design/StarField";
+import { GlassNav } from "@/components/design/GlassNav";
+import { OvershareMark } from "@/components/overshare/OvershareMark";
 
 export const dynamic = "force-static";
 export const revalidate = 3600; // Revalidate every hour
@@ -64,8 +66,17 @@ export default function OvershareIndex() {
       <StarField />
 
       <div className="relative z-10 mx-auto px-8 sm:px-12 md:px-16 lg:px-24 xl:px-32 py-20 sm:py-24 md:py-32 lg:py-40" style={{ maxWidth: "1600px" }}>
-        {/* Header */}
-        <header className="mb-20 sm:mb-24 md:mb-32 lg:mb-40">
+        <nav className="mb-12 sm:mb-16">
+          <GlassNav />
+        </nav>
+
+        <header className="mb-20 sm:mb-24 md:mb-32 lg:mb-40 space-y-8">
+          <div className="flex flex-wrap items-center gap-4 rounded-[28px] border border-white/10 bg-white/[0.02] px-5 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-lg">
+            <OvershareMark />
+            <p className="text-[0.65rem] uppercase tracking-[0.35em] text-white/60">
+              Overshare · Knowledge Archive
+            </p>
+          </div>
           <p className="mb-4 sm:mb-6 text-xs sm:text-sm uppercase tracking-[0.5em] text-cyan-400/60">
             Knowledge Archive
           </p>
@@ -88,11 +99,11 @@ export default function OvershareIndex() {
 
         {/* Breadcrumb Grid */}
         {categories.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-sm">
-            <p className="text-white/40">No breadcrumbs yet.</p>
-            <p className="mt-2 text-sm text-white/25">
+          <div className="rounded-[32px] border border-white/10 bg-white/[0.02] p-12 text-center backdrop-blur-md shadow-[0_35px_120px_rgba(0,0,0,0.55)]">
+            <p className="text-white/50">No breadcrumbs yet.</p>
+            <p className="mt-2 text-sm text-white/30">
               Staff can generate breadcrumbs at{" "}
-              <Link href="/staff/breadcrumbs" className="text-cyan-400/60 hover:text-cyan-400">
+              <Link href="/staff/breadcrumbs" className="text-cyan-300/60 hover:text-cyan-300">
                 /staff/breadcrumbs
               </Link>
             </p>
@@ -100,22 +111,25 @@ export default function OvershareIndex() {
         ) : (
           <div className="space-y-16 sm:space-y-20 md:space-y-24 lg:space-y-32">
             {categories.map((category) => (
-              <section key={category}>
-                <h2 className="mb-6 sm:mb-8 md:mb-10 text-xs sm:text-sm uppercase tracking-[0.4em] text-white/40">
+              <section
+                key={category}
+                className="rounded-[36px] border border-white/10 bg-white/[0.02] p-8 sm:p-10 md:p-12 shadow-[0_45px_140px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+              >
+                <h2 className="mb-6 sm:mb-8 md:mb-10 text-xs sm:text-sm uppercase tracking-[0.4em] text-white/50">
                   {category}
                 </h2>
                 <div className="grid gap-4 sm:gap-6 md:gap-8 sm:grid-cols-2">
                   {grouped[category].map((bc) => (
                     <Link key={bc.slug} href={`/overshare/${bc.slug}`}>
-                      <article className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] p-6 sm:p-8 md:p-10 backdrop-blur-sm transition-all duration-300 hover:border-cyan-400/30 hover:bg-white/[0.05]">
-                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                        <h3 className="relative text-lg font-light capitalize text-white/90 transition-colors group-hover:text-white">
+                      <article className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] p-6 sm:p-7 md:p-8 shadow-[0_25px_80px_rgba(0,0,0,0.5)] backdrop-blur-lg transition-all duration-300 hover:border-cyan-400/40 hover:bg-white/[0.06]">
+                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                        <h3 className="relative text-lg font-light capitalize text-white/90 transition group-hover:text-white">
                           {bc.title}
                         </h3>
                         <p className="relative mt-2 text-xs text-white/30">
                           {bc.file}
                         </p>
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 transition-all duration-300 group-hover:translate-x-1 group-hover:text-cyan-400/50">
+                        <div className="absolute right-5 top-1/2 -translate-y-1/2 text-white/25 transition-all duration-300 group-hover:translate-x-1.5 group-hover:text-cyan-300/60">
                           →
                         </div>
                       </article>

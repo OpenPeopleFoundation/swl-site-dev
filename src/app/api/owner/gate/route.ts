@@ -119,7 +119,7 @@ async function ensureSeedUsers(client: SupabaseClient) {
   );
 }
 
-const COOKIE_DOMAIN = process.env.AUTH_COOKIE_DOMAIN;
+const COOKIE_DOMAIN = process.env.AUTH_COOKIE_DOMAIN ?? ".snowwhitelaundry.co";
 
 type StaffAccessRecord = {
   password_hash: string;

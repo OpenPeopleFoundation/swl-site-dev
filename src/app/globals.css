@@ -1,24 +1,82 @@
 @import "tailwindcss";
 @import "../design/tokens.css";
 
-/* Global glass baseline */
-*,
-*::before,
-*::after,
-::backdrop {
-  box-sizing: border-box;
-  border-color: rgba(255, 255, 255, 0.08);
-  outline-color: rgba(255, 255, 255, 0.3);
-  text-rendering: optimizeLegibility;
-  background-clip: padding-box;
+@layer base {
+  * ,
+  *::before,
+  *::after,
+  ::backdrop {
+    box-sizing: border-box;
+    border: 0 solid transparent;
+    margin: 0;
+    padding: 0;
+    border-color: rgba(255, 255, 255, 0.08);
+    outline-color: rgba(255, 255, 255, 0.3);
+    text-rendering: optimizeLegibility;
+    background-clip: padding-box;
+  }
+
+  :where(
+    article,
+    section,
+    div,
+    nav,
+    header,
+    footer,
+    main,
+    form,
+    aside
+  ) {
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    background:
+      radial-gradient(circle at 18% 12%, rgba(255, 255, 255, 0.06), transparent 55%),
+      radial-gradient(circle at 78% 72%, rgba(82, 112, 255, 0.05), transparent 60%),
+      rgba(3, 4, 10, 0.45);
+    box-shadow:
+      0 30px 90px rgba(0, 0, 0, 0.55),
+      inset 0 0 40px rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(26px) saturate(125%);
+    -webkit-backdrop-filter: blur(26px) saturate(125%);
+  }
+
+  ::backdrop {
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.08), transparent 55%),
+      radial-gradient(circle at 80% 60%, rgba(80, 110, 255, 0.08), transparent 65%),
+      #01020a;
+    backdrop-filter: blur(48px) saturate(115%);
+  }
 }
 
-::backdrop {
-  background:
-    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.08), transparent 55%),
-    radial-gradient(circle at 80% 60%, rgba(80, 110, 255, 0.08), transparent 65%),
-    #01020a;
-  backdrop-filter: blur(48px) saturate(115%);
+@keyframes overshare-dot-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  40% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+}
+
+@keyframes overshare-node-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  40% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
 }
 
 :root {
