@@ -41,18 +41,16 @@ export function GlassNav({ className = "" }: { className?: string }) {
           <span className="text-[0.55rem] uppercase tracking-[0.5em] text-white/75">
             Snow White Laundry
           </span>
-          <span className="flex items-center gap-2 text-[0.55rem] uppercase tracking-[0.45em] text-white/45">
-            Hover or tap to navigate
-            <motion.span
-              aria-hidden="true"
-              initial={false}
-              animate={{ rotate: isExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-              className="text-xs"
-            >
-              ⌄
-            </motion.span>
-          </span>
+          <motion.span
+            aria-hidden="true"
+            initial={false}
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-xs text-white/60"
+          >
+            ⌄
+          </motion.span>
+          <span className="sr-only">Toggle navigation</span>
         </button>
 
         <AnimatePresence initial={false}>

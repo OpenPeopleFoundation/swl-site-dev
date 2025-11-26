@@ -9,7 +9,7 @@ export function PosToggleButton() {
   const router = useRouter();
   const pathname = usePathname();
   const siteMode = useSyncExternalStore(subscribeToSiteMode, readSiteMode, () => null);
-  const defaultConsoleRoute = siteMode === "owner" ? "/owners/console" : "/staff";
+  const defaultConsoleRoute = siteMode === "owner" ? "/owner-console" : "/staff";
 
   const onPosRoute = pathname?.startsWith("/pos");
   const onGateRoute = pathname?.startsWith("/gate");

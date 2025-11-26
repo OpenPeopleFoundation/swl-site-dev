@@ -202,7 +202,7 @@ export function LoginPanel({ nextPath, wakeSignal = 0 }: LoginPanelProps) {
       const destination =
         nextPath ??
         (payload.role === "owner"
-          ? "/owners/console"
+          ? "/owner-console"
           : payload.role === "staff"
             ? "/staff"
             : "/customer/events");
