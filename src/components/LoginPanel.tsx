@@ -198,17 +198,19 @@ export function LoginPanel({ nextPath, wakeSignal = 0 }: LoginPanelProps) {
       setNeedsReset(false);
       setResetPassword("");
       setResetConfirm("");
-      // Redirect based on role: owner/staff → staff side, customer → customer site
-      const destination =
-        nextPath ??
-        (payload.role === "owner"
-          ? "/owner-console"
-          : payload.role === "staff"
-            ? "/staff"
-            : "/customer/events");
+      let destination = nextPath;
+      if (!destination || destination === "/gate") {
+        if (payload.role === "owner") {
+          destination = "/owner-console";
+        } else if (payload.role === "staff") {
+          destination = "/staff";
+        } else {
+          destination = "/customer/events";
+        }
+      }
       setStatus("RestaurantOS is ready.");
       setTimeout(() => {
-        router.replace(destination);
+        router.replace(destination ?? "/");
       }, 600);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to continue.");
