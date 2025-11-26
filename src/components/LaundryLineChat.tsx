@@ -35,7 +35,7 @@ export type LaundryLineChatController = {
   setInput: (value: string) => void;
   isLoading: boolean;
   handleSend: () => Promise<void>;
-  scrollRef: RefObject<HTMLDivElement>;
+  scrollRef: RefObject<HTMLDivElement | null>;
 };
 
 export function useLaundryLineChat(
