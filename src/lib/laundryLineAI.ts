@@ -2,6 +2,7 @@
 
 import type { LaundryLineConversationMessage } from "@/types/laundry-line";
 import { getOpenAIClient } from "@/lib/owner/openai";
+import { retrieveOvershareSections } from "@/lib/overshareRag";
 
 const LAUNDRY_LINE_MODEL =
   process.env.OPENAI_LAUNDRY_LINE_MODEL ??
@@ -19,7 +20,48 @@ Your responsibilities:
 
 You refer to the restaurant as "we" and guests as "you". Avoid technical jargon. Never mention AI or model details.`;
 
-const DEFAULT_MANUAL_CONTEXT = `
+const CONTEXT_MATCH_COUNT = Number.parseInt(
+  process.env.LAUDRY_LINE_CONTEXT_MATCHES ?? "6",
+  10,
+);
+
+async function getLaundryLineContext(
+  history: LaundryLineConversationMessage[],
+  intentHint: string | null,
+) {
+  try {
+    const latestGuestEntry = [...history]
+      .reverse()
+      .find((message) => message.sender === "guest");
+
+    const query = latestGuestEntry?.content?.trim() || "Snow White Laundry guest inquiry";
+
+    const matches = await retrieveOvershareSections(query, {
+      matchCount: CONTEXT_MATCH_COUNT,
+      intentHint,
+    });
+
+    if (!matches.length) {
+      return FALLBACK_MANUAL_CONTEXT;
+    }
+
+    return matches
+      .map((match, index) => {
+        const metaLines = formatFrontmatter(match.frontmatter ?? {});
+        const metaBlock = metaLines.length ? `${metaLines.join(" · ")}\n` : "";
+        return `### [${index + 1}] ${match.title ?? match.slug} (${match.category ?? "general"})
+Slug: ${match.slug}
+Similarity: ${match.similarity.toFixed(3)}
+${metaBlock}${match.body}`;
+      })
+      .join("\n\n---\n\n");
+  } catch (error) {
+    console.error("Laundry Line context failed to load", error);
+    return FALLBACK_MANUAL_CONTEXT;
+  }
+}
+
+const FALLBACK_MANUAL_CONTEXT = `
 Snow White Laundry · Living Manual (excerpt)
 --------------------------------------------
 - Location: 281 Water Street, St. John's, Newfoundland & Labrador.
@@ -29,11 +71,6 @@ Snow White Laundry · Living Manual (excerpt)
 - Private events: We can host intimate buyouts and private tastings once the room opens. Guests can share dates, party size, and intent so we can follow up quietly.
 - Communication tone: Direct, kind, and grounded in intention / emotion / craft.
 `;
-
-async function getLaundryLineContext() {
-  // Placeholder for future RAG hook; returning static context keeps the shape consistent.
-  return DEFAULT_MANUAL_CONTEXT;
-}
 
 function buildConversationPrompt(history: LaundryLineConversationMessage[]) {
   if (!history.length) return "Guest: Hello";
@@ -49,8 +86,30 @@ function buildFallbackReply() {
   return "The Laundry Line is taking a short pause—could you try again in a moment? If it persists, email us and we’ll follow up personally.";
 }
 
+function formatFrontmatter(frontmatter: Record<string, unknown>) {
+  const preferredKeys = [
+    "type",
+    "category",
+    "tone",
+    "llm_signal_keywords",
+    "tags",
+    "created_at",
+    "created_by",
+  ];
+
+  return Object.entries(frontmatter)
+    .filter(([key]) => preferredKeys.includes(key) || key.startsWith("linked_"))
+    .map(([key, value]) => {
+      if (Array.isArray(value)) {
+        return `${key}: ${value.map((item) => String(item)).join(", ")}`;
+      }
+      return `${key}: ${String(value)}`;
+    });
+}
+
 export async function generateLaundryLineReply(
   history: LaundryLineConversationMessage[],
+  intentHint?: string | null,
 ): Promise<string> {
   let openai;
   try {
@@ -61,7 +120,7 @@ export async function generateLaundryLineReply(
   }
 
   try {
-    const context = await getLaundryLineContext();
+    const context = await getLaundryLineContext(history, intentHint?.trim() || null);
     const trimmedHistory = history.slice(-12);
     const conversation = buildConversationPrompt(trimmedHistory);
 

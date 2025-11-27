@@ -4,26 +4,31 @@ let openAIClient: OpenAI | null = null;
 
 export function getOpenAIClient() {
   if (openAIClient) return openAIClient;
-  let apiKey = process.env.OPENAI_API_KEY;
+
+  let apiKey =
+    process.env.OPENAI_API_KEY ??
+    process.env.XAI_API_KEY ??
+    process.env.NEXT_PUBLIC_OPENAI_API_KEY;
+
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not configured.");
+    throw new Error("Set OPENAI_API_KEY (or XAI_API_KEY) in your environment.");
   }
-  
-  // Trim whitespace and remove quotes if present
+
   apiKey = apiKey.trim().replace(/^["']|["']$/g, "");
-  
-  // Validate key format (should start with sk-)
-  if (!apiKey.startsWith("sk-")) {
-    throw new Error(
-      `Invalid OpenAI API key format. Keys should start with "sk-". ` +
-      `Your key appears to start with "${apiKey.substring(0, 10)}...". ` +
-      `Please check your OPENAI_API_KEY in .env.local and ensure it's a valid OpenAI API key. ` +
-      `Get a new key at https://platform.openai.com/account/api-keys`
-    );
+
+  if (!apiKey.length) {
+    throw new Error("API key is empty after trimming. Check your env config.");
   }
-  
+
+  const baseURL =
+    process.env.OPENAI_BASE_URL?.trim() ||
+    process.env.XAI_BASE_URL?.trim() ||
+    undefined;
+
   openAIClient = new OpenAI({
     apiKey,
+    ...(baseURL ? { baseURL } : {}),
   });
+
   return openAIClient;
 }

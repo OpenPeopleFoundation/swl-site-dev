@@ -107,7 +107,7 @@ export async function POST(request: Request) {
         createdAt: row.created_at ?? new Date().toISOString(),
       })) ?? [];
 
-    const reply = await generateLaundryLineReply(history);
+    const reply = await generateLaundryLineReply(history, body.metadata?.intentHint);
 
     const assistantInsert = await supabase
       .from("laundry_line_messages")
